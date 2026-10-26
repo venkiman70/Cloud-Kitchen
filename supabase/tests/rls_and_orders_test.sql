@@ -1,7 +1,8 @@
 -- Tenant isolation + order flow test.
 -- Runs inside one transaction and rolls back, so it leaves no data behind.
 -- Usage (local Postgres with the shim):  psql -v ON_ERROR_STOP=1 -f supabase/tests/rls_and_orders_test.sql
--- Usage (Supabase):                       supabase test db  (or paste into the SQL editor on a staging project)
+-- Usage (Supabase): paste into SQL Editor and click Run. If asked about RLS, choose "Run without RLS"
+--                   (the only new table is a temporary one that is thrown away).
 begin;
 
 create or replace function pg_temp.assert(cond boolean, msg text) returns void language plpgsql as $$
@@ -157,5 +158,6 @@ reset role;
 select pg_temp.assert((select status = 'refunded' from orders where stripe_payment_intent_id = 'pi_test_A'), 'full refund marks order refunded');
 select pg_temp.assert((select reversed_cents = 152 from platform_fee_ledger), 'platform fee reversed on full refund');
 
-\echo 'ALL TESTS PASSED'
 rollback;
+-- Reached only if every assertion above passed (any failure stops the script with an error).
+select 'ALL TESTS PASSED' as result;
