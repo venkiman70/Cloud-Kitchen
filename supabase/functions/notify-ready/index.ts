@@ -14,13 +14,11 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
   if (req.method !== "POST") return json(req, { error: "Method not allowed" }, 405);
 
-  const authHeader = req.headers.get("Authorization") ?? "";
-  const asUser = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, {
-    global: { headers: { Authorization: authHeader } },
-    auth: { persistSession: false },
-  });
-  const { data: userData } = await asUser.auth.getUser();
-  if (!userData?.user) return json(req, { error: "Sign in again." }, 401);
+  // Validate the staff member's session token (works with legacy anon keys and new publishable keys).
+  const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+  const { data: userData } = await service.auth.getUser(token);
+  const userId = userData?.user?.id;
+  if (!userId) return json(req, { error: "Sign in again." }, 401);
 
   const { orderId } = await req.json().catch(() => ({}));
   if (!orderId) return json(req, { error: "Missing order." }, 400);
@@ -30,8 +28,11 @@ Deno.serve(async (req) => {
   if (!order) return json(req, { error: "Order not found." }, 404);
 
   // Same check the database uses: is this user staff for the order's tenant?
-  const { data: isStaff } = await asUser.rpc("is_staff", { t: order.tenant_id });
-  if (!isStaff) return json(req, { error: "Not allowed." }, 403);
+  const [{ data: member }, { data: admin }] = await Promise.all([
+    service.from("tenant_members").select("role").eq("tenant_id", order.tenant_id).eq("user_id", userId).maybeSingle(),
+    service.from("platform_admins").select("user_id").eq("user_id", userId).maybeSingle(),
+  ]);
+  if (!member && !admin) return json(req, { error: "Not allowed." }, 403);
 
   if (order.status !== "ready") return json(req, { sent: false, reason: "not_ready" });
   if (order.ready_notified_at) return json(req, { sent: false, reason: "already_sent" });
