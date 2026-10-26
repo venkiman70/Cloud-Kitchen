@@ -1,0 +1,11 @@
+# Supabase CLI settings used by `supabase functions deploy` and `supabase db push`.
+project_id = "kitchenos"
+
+[functions.create-order]
+verify_jwt = true     # the storefront calls it with the public anon key
+
+[functions.notify-ready]
+verify_jwt = true     # staff session token required
+
+[functions.stripe-webhook]
+verify_jwt = false    # Stripe can't send a Supabase token; the Stripe signature is checked instead
