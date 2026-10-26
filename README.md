@@ -28,18 +28,8 @@ Card numbers never touch this app: customers pay on Stripe's page. All prices, t
 ### 1. Supabase (database, logins, functions)
 
 1. Create a project at [supabase.com](https://supabase.com) (region: US East or US Central). Note the **Project URL**, **anon key** and **service_role key** (Project Settings → API).
-2. Install the CLI and link the project:
-   ```bash
-   npm i -g supabase
-   supabase login
-   supabase link --project-ref YOUR-PROJECT-REF
-   ```
-3. Create the tables, rules and functions, then load the menu:
-   ```bash
-   supabase db push      # runs supabase/migrations/*
-   ```
-   Then open **SQL Editor**, paste the contents of `supabase/seed.sql` and click **Run**.
-   Do **not** run `supabase/tests/_local_supabase_shim.sql` on Supabase; it's only for local testing.
+2. **Create the database (browser only, no installs):** open **SQL Editor** → *New query*, paste the whole of `supabase/setup_all.sql`, click **Run**. It should finish with "Success. No rows returned". Run it once only.
+3. (Later, for developers) the same schema lives in `supabase/migrations/` for `supabase db push` with the Supabase CLI.
 4. Run the safety test (it rolls back and leaves no data): paste `supabase/tests/rls_and_orders_test.sql` into SQL Editor → Run. The last line should read `ALL TESTS PASSED`.
 5. **Auth → URL Configuration:** Site URL = your Vercel URL (later `https://order.aryascuisine.com`). Add redirect URLs: `https://*.vercel.app/**`, `http://localhost:5173/**`.
 6. **Add staff.** Authentication → Users → *Invite user* (their email). Then in SQL Editor:
