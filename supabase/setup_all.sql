@@ -1,5 +1,5 @@
 -- ONE-TIME SETUP: paste this whole file into Supabase → SQL Editor → Run.
--- It is the three files in supabase/migrations plus supabase/seed.sql, in order.
+-- It is the files in supabase/migrations plus supabase/seed.sql, in order.
 -- Run it only once, on a new, empty project.
 
 -- ===== supabase/migrations/20261026000001_init.sql =====
@@ -921,6 +921,47 @@ begin
   end if;
 end $$;
 
+-- ===== supabase/migrations/20261026000004_branding.sql =====
+-- Branding: a home-page banner per kitchen, returned to the storefront.
+alter table public.tenant_settings add column if not exists banner_url text;
+grant update (banner_url) on public.tenant_settings to authenticated;
+
+create or replace function public.storefront_config(p_tenant text default null, p_host text default null)
+returns jsonb language plpgsql stable security definer set search_path = public as $$
+declare
+  t tenants;
+  s tenant_settings;
+begin
+  if p_tenant is not null then
+    select * into t from tenants where slug = lower(p_tenant) and status = 'active';
+  elsif p_host is not null then
+    select tn.* into t from tenants tn join tenant_domains d on d.tenant_id = tn.id
+     where d.domain = lower(p_host) and tn.status = 'active';
+  end if;
+  if t.id is null then return null; end if;
+  select * into s from tenant_settings where tenant_id = t.id;
+
+  return jsonb_build_object(
+    'tenant', jsonb_build_object('id', t.id, 'slug', t.slug, 'name', t.name),
+    'settings', jsonb_build_object(
+      'timezone', s.timezone, 'currency', s.currency, 'taxRateBps', s.tax_rate_bps,
+      'leadTimeMinutes', s.lead_time_minutes, 'slotMinutes', s.slot_minutes,
+      'pickupHours', s.pickup_hours, 'address', s.address, 'phone', s.phone,
+      'whatsapp', s.whatsapp, 'pickupInstructions', s.pickup_instructions,
+      'payAtPickup', s.pay_at_pickup, 'bannerUrl', s.banner_url),
+    'brands', coalesce((select jsonb_agg(jsonb_build_object(
+        'id', b.id, 'slug', b.slug, 'name', b.name, 'tagline', b.tagline, 'theme', b.theme)
+        order by b.sort) from brands b where b.tenant_id = t.id and b.is_active), '[]'::jsonb),
+    'collections', coalesce((select jsonb_agg(jsonb_build_object(
+        'id', c.id, 'brandId', c.brand_id, 'slug', c.slug, 'name', c.name,
+        'orderCutoffAt', c.order_cutoff_at, 'pickupDates', c.pickup_dates, 'isPreorder', c.is_preorder))
+        from menu_collections c where c.tenant_id = t.id
+         and (c.ends_at is null or c.ends_at > now())), '[]'::jsonb)
+  );
+end $$;
+
+grant execute on function public.storefront_config(text, text) to anon, authenticated;
+
 -- ===== supabase/seed.sql =====
 -- Seed: Aryas Cuisine tenant with two brands (Aryas, AHIL).
 -- Generated from the Menu Manager prototype data on 2026-10-26.
@@ -935,9 +976,10 @@ values ('0fb0f7f5-15f9-5968-88e5-76377bd2ed13', 'America/Chicago', 'usd', 825, 2
   '2526 Manana Dr, Suite 104, Dallas, TX', '+19459541827', '+19459541827',
   'Pickup at Suite 104. Call or WhatsApp +1 945 954 1827 when you arrive.', false, 400)
 on conflict (tenant_id) do nothing;
+update public.tenant_settings set banner_url = '/brand/banner.webp' where tenant_id = (select id from public.tenants where slug = 'aryas');
 insert into public.brands (id, tenant_id, slug, name, tagline, theme, order_prefix, sort) values
-  ('25c78a6d-48b6-5b28-85b4-bcaf19af08c9', '0fb0f7f5-15f9-5968-88e5-76377bd2ed13', 'aryas', 'Aryas Cuisine', 'Indian soul food, made with love', '{"accent":"#7A2318","accentInk":"#FFF8EC","accentDark":"#F08A3C","accentInkDark":"#1E1410","logo":"/brand/aryas-lockup.svg","logoStacked":"/brand/aryas-logo.svg"}', 'AC', 1),
-  ('0bc8d28a-dd02-5760-89c1-4af7fc872363', '0fb0f7f5-15f9-5968-88e5-76377bd2ed13', 'ahil', 'AHIL', 'Bringing joy in every bite', '{"accent":"#2463B5","accentInk":"#FFFFFF","accentDark":"#7FB2F0","accentInkDark":"#0E1D33","logo":"/brand/ahil-lockup.svg","logoStacked":"/brand/ahil-logo.svg"}', 'AH', 2)
+  ('25c78a6d-48b6-5b28-85b4-bcaf19af08c9', '0fb0f7f5-15f9-5968-88e5-76377bd2ed13', 'aryas', 'Aryas Cuisine', 'Indian soul food, made with love', '{"accent":"#1E6B33","accentInk":"#FFFFFF","accentDark":"#7CC98C","accentInkDark":"#10230F","logo":"/brand/aryas-logo.webp","logoStacked":"/brand/aryas-logo.webp","hero":"/brand/aryas-card.webp"}', 'AC', 1),
+  ('0bc8d28a-dd02-5760-89c1-4af7fc872363', '0fb0f7f5-15f9-5968-88e5-76377bd2ed13', 'ahil', 'AHIL', 'Bringing joy in every bite', '{"accent":"#2B7BBF","accentInk":"#FFFFFF","accentDark":"#8CC4F0","accentInkDark":"#0C2033","logo":"/brand/ahil-logo.webp","logoStacked":"/brand/ahil-logo.webp","hero":"/brand/ahil-card.webp"}', 'AH', 2)
 on conflict do nothing;
 insert into public.menu_collections (id, tenant_id, brand_id, slug, name, ends_at, order_cutoff_at, pickup_dates, is_preorder)
 values ('637cc9dd-c666-5ccf-9cbb-5f3ff5279d04', '0fb0f7f5-15f9-5968-88e5-76377bd2ed13', '0bc8d28a-dd02-5760-89c1-4af7fc872363', 'diwali-2026', 'Diwali 2026 pre-orders', '2026-11-09 00:00:00-06',

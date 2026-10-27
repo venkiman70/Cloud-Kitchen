@@ -74,7 +74,7 @@ export default function Menu() {
         <div className="wrap flex items-center gap-3 py-2">
           {store.brands.length > 1 && <Link to="/" className="btn min-h-[40px] px-3 text-sm" aria-label="All menus">←</Link>}
           <div className="min-w-0 flex-1">
-            <BrandMark brand={brand} className="h-12 w-auto max-w-full sm:h-14" />
+            <BrandMark brand={brand} className="h-16 w-auto max-w-full rounded-lg sm:h-20" />
           </div>
         </div>
         <div className="toran opacity-90" aria-hidden="true" />

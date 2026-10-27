@@ -1,14 +1,21 @@
 # Changelog
 
+## 0.2.1 — Mon 26 Oct 2026 (owner's artwork)
+
+- Uses the Aryas / AHIL banner artwork: full banner on the home page (wide screens), each brand's half as its card picture on phones, logos cropped from the artwork in the menu and checkout headers, new app icon (chef and "A").
+- Colours matched to the artwork: Aryas leaf green, AHIL sky blue, dark-brown lettering; each brand card keeps its own colour.
+- New `tenant_settings.banner_url` (migration 0004) so each kitchen can have its own banner.
+- Paste-in file for existing projects: `supabase/branding_2026-10-26.sql` (replaces brand_theme_2026-10-26.sql).
+
 ## 0.2.0 — Mon 26 Oct 2026 (festive theme)
 
 - New look from the Aryas / AHIL artwork: cream paper, maroon and marigold for Aryas, royal blue for AHIL, banana-leaf green, marigold garland strip on every customer page.
-- Vector logos (stacked and horizontal) for both brands in `public/brand/`, plus a new app icon; logos come from `brands.theme` so other kitchens can use their own.
+- Logos come from `brands.theme` so other kitchens can use their own.
 - Fonts bundled with the app (Rozha One, Kaushan Script, Figtree) instead of loading from Google.
 - Dark mode: logos sit on a cream plate so they stay readable; brand colours have dark-mode versions.
 - Checkout has the brand header; roomier cart rows on phones.
 - Fix: a weekday missing from pickup hours now counts as open in the app, matching the database.
-- Real Aryas menu from Uber Eats (`supabase/menu_aryas_ubereats_2026-10-26.sql`) and brand theme SQL (`supabase/brand_theme_2026-10-26.sql`).
+- Real Aryas menu from Uber Eats (`supabase/menu_aryas_ubereats_2026-10-26.sql`).
 
 ## 0.1.0 — Mon 26 Oct 2026 (Day 1)
 

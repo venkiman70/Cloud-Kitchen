@@ -6,7 +6,7 @@
   Festive kitchen theme from the Aryas / AHIL artwork:
   warm cream paper, deep maroon ink, marigold and turmeric, banana-leaf green.
   --accent / --accent-ink come from each brand's theme (brands.theme) at runtime:
-  Aryas = maroon, AHIL = royal blue, with lighter versions for dark mode.
+  Aryas = leaf green, AHIL = sky blue, with lighter versions for dark mode.
 */
 :root {
   --bg: 251 243 226;       /* cream paper */
@@ -17,8 +17,8 @@
   --muted: 122 88 68;
   --veg: 31 138 59; --nonveg: 179 38 30; --egg: 199 122 0;
   --gold: 232 178 58; --marigold: 244 161 31; --leaf: 63 122 43;
-  --accent-l: #7A2318; --accent-ink-l: #FFF8EC;
-  --accent-d: #F08A3C; --accent-ink-d: #1E1410;
+  --accent-l: #1E6B33; --accent-ink-l: #FFFFFF;
+  --accent-d: #7CC98C; --accent-ink-d: #10230F;
   --accent: var(--accent-l); --accent-ink: var(--accent-ink-l);
   color-scheme: light;
 }
@@ -32,6 +32,10 @@
     color-scheme: dark;
   }
 }
+/* A block that carries its own brand colours (e.g. each brand card on the home page) */
+.brand-scope { --accent: var(--accent-l); --accent-ink: var(--accent-ink-l); }
+@media (prefers-color-scheme: dark) { .brand-scope { --accent: var(--accent-d); --accent-ink: var(--accent-ink-d); } }
+
 /* Kitchen screen is always dark, high contrast */
 .kitchen-dark {
   --bg: 22 15 12; --surface: 36 25 20; --sunk: 46 33 26; --line: 74 54 42;

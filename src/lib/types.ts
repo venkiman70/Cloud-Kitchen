@@ -10,6 +10,7 @@ export type Brand = {
     accentDark?: string; accentInkDark?: string;  // dark mode
     logo?: string;          // horizontal lockup for headers
     logoStacked?: string;   // square logo for cards
+    hero?: string;          // picture for the brand's card on the home page
   };
 };
 
@@ -35,6 +36,7 @@ export type StoreSettings = {
   whatsapp: string | null;
   pickupInstructions: string | null;
   payAtPickup: boolean;
+  bannerUrl?: string | null;
 };
 
 export type StoreConfig = {

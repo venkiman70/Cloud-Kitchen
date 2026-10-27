@@ -87,7 +87,7 @@ export default function Checkout() {
     <header className="border-b border-line bg-surface" style={{ paddingTop: "env(safe-area-inset-top)" }}>
       <div className="wrap flex max-w-2xl items-center gap-3 py-2">
         <Link to={`/${brand.slug}`} className="btn min-h-[40px] px-3 text-sm" aria-label={`Back to ${brand.name}`}>←</Link>
-        <BrandMark brand={brand} className="h-12 w-auto max-w-full" />
+        <BrandMark brand={brand} className="h-16 w-auto max-w-full rounded-lg" />
       </div>
       <div className="toran" aria-hidden="true" />
     </header>
