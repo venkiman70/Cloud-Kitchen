@@ -7,6 +7,7 @@
 - New `tenant_settings.banner_url` (migration 0004) so each kitchen can have its own banner.
 - Paste-in file for existing projects: `supabase/branding_2026-10-26.sql` (replaces brand_theme_2026-10-26.sql).
 - Dish photos for 9 Aryas items (`public/menu/aryas/`, set by `supabase/menu_photos_2026-10-26.sql`); larger photos on menu cards; admin Menu shows a thumbnail or a "No photo" tag.
+- 29 more dish photos from the menu poster; 4 matched to existing dishes (Sev Puri, Ragada Chaat, Podi Rice, Egg Kathi Roll); 25 new dishes ready in `supabase/menu_aryas_full_menu_TEMPLATE.sql`, which refuses to run until every price is filled in.
 
 ## 0.2.0 — Mon 26 Oct 2026 (festive theme)
 

@@ -10,7 +10,11 @@ update menu_items i set image_url = p.url
     ('Garden Fresh Pulav',      '/menu/aryas/garden-fresh-pulav.webp'),
     ('Paneer Kathi Roll',       '/menu/aryas/paneer-kathi-roll.webp'),
     ('Chicken Kathi Roll',      '/menu/aryas/chicken-kathi-roll.webp'),
-    ('Crisp ''N'' Roll Veggies', '/menu/aryas/veg-rolls.webp')
+    ('Crisp ''N'' Roll Veggies', '/menu/aryas/veg-rolls.webp'),
+    ('Sev Puri',                '/menu/aryas/sev-puri.webp'),
+    ('Ragada Chaat',            '/menu/aryas/ragada-pattice.webp'),
+    ('Crunchy Podi Rice',       '/menu/aryas/podi-rice.webp'),
+    ('Egg Kathi Roll',          '/menu/aryas/egg-kathi-roll.webp')
   ) as p(name, url)
  where i.name = p.name and i.deleted_at is null
    and i.brand_id = (select b.id from brands b join tenants t on t.id = b.tenant_id where t.slug = 'aryas' and b.slug = 'aryas');
