@@ -7,7 +7,7 @@ import Home from "./pages/Home";
 import Menu from "./pages/Menu";
 import Checkout from "./pages/Checkout";
 import OrderStatus from "./pages/OrderStatus";
-import AdminShell, { RequireStaff } from "./pages/admin/AdminShell";
+import AdminShell, { RequireManager, RequireStaff } from "./pages/admin/AdminShell";
 import Board from "./pages/admin/Board";
 import Prep from "./pages/admin/Prep";
 import MenuAdmin from "./pages/admin/MenuAdmin";
@@ -33,7 +33,7 @@ export default function App() {
           <Route path="/admin" element={<AdminShell />}>
             <Route index element={<Board />} />
             <Route path="prep" element={<Prep />} />
-            <Route path="menu" element={<MenuAdmin />} />
+            <Route path="menu" element={<RequireManager><MenuAdmin /></RequireManager>} />
             <Route path="sales" element={<Sales />} />
           </Route>
           <Route path="/kitchen" element={<RequireStaff><Board kitchen /></RequireStaff>} />

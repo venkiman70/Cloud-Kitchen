@@ -96,6 +96,7 @@ Database tests against a local Postgres 15+ (no Docker needed):
 psql -d test -f supabase/tests/_local_supabase_shim.sql
 for f in supabase/migrations/*.sql supabase/seed.sql; do psql -d test -f "$f"; done
 psql -d test -f supabase/tests/rls_and_orders_test.sql   # → ALL TESTS PASSED
+psql -d test -f supabase/tests/menu_manager_test.sql     # → MENU MANAGER TESTS PASSED
 ```
 
 ---

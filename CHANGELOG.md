@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0 — Tue 27 Oct 2026 (Menu manager)
+
+- **Admin → Menu** (owners and managers only; hidden from kitchen staff): dishes grouped by brand and category with photo, price, veg/non-veg mark and a Sold-out switch.
+- **Add / Edit dish** in one form (bottom sheet on phones, dialog on tablets and desktop): name, category, price in dollars (saved as cents), description, veg/egg/non-veg, photo. Validated with Zod + React Hook Form.
+- **Photos:** take with the phone camera or choose a file (max 5 MB), shrunk to 1200 px WebP in the browser, uploaded to the `menu` bucket at `tenant/{tenant_id}/menu/{item_id}.webp`; preview and Remove photo.
+- **Remove / Restore:** soft delete (`deleted_at`) with a confirm step; "Show removed" lists removed dishes with Restore. Past orders keep their names and prices.
+- **Audit log:** new `audit_log` table; database triggers record every price change and every remove/restore (old value, new value, user, time). Readable by owners and managers only.
+- **Database:** migration `20261027000005_menu_manager.sql` (paste-in copy: `supabase/menu_manager_2026-10-27.sql`) creates the public-read `menu` bucket and storage policies that let only owners and managers of that tenant write to it. Tests: `supabase/tests/menu_manager_test.sql`.
+- Not yet: crop, CSV import, drag reorder, adding variants or modifiers, daily limits.
+
 ## 0.2.1 — Mon 26 Oct 2026 (owner's artwork)
 
 - Uses the Aryas / AHIL banner artwork: full banner on the home page (wide screens), each brand's half as its card picture on phones, logos cropped from the artwork in the menu and checkout headers, new app icon (chef and "A").

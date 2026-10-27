@@ -95,6 +95,13 @@ export function RequireStaff({ children }: { children: ReactNode }) {
   );
 }
 
+/** Owner / manager only pages (e.g. Menu manager). Kitchen staff see a short note instead. */
+export function RequireManager({ children }: { children: ReactNode }) {
+  const { isManager } = useAdmin();
+  if (!isManager) return <main className="wrap max-w-md py-16"><Notice tone="warn">Only owners and managers can open this page.</Notice></main>;
+  return <>{children}</>;
+}
+
 export default function AdminShell() {
   return (
     <RequireStaff>
@@ -114,7 +121,7 @@ function AdminNav() {
         <nav className="flex flex-wrap gap-2">
           <NavLink to="/admin" end className={link}>Orders</NavLink>
           <NavLink to="/admin/prep" className={link}>Prep list</NavLink>
-          <NavLink to="/admin/menu" className={link}>Menu</NavLink>
+          {isManager && <NavLink to="/admin/menu" className={link}>Menu</NavLink>}
           {isManager && <NavLink to="/admin/sales" className={link}>Sales</NavLink>}
           <NavLink to="/kitchen" className={link}>Kitchen screen</NavLink>
         </nav>
