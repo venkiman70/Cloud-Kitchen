@@ -8,6 +8,7 @@
 - Paste-in file for existing projects: `supabase/branding_2026-10-26.sql` (replaces brand_theme_2026-10-26.sql).
 - Dish photos for 9 Aryas items (`public/menu/aryas/`, set by `supabase/menu_photos_2026-10-26.sql`); larger photos on menu cards; admin Menu shows a thumbnail or a "No photo" tag.
 - 29 more dish photos from the menu poster; 4 matched to existing dishes (Sev Puri, Ragada Chaat, Podi Rice, Egg Kathi Roll); 25 new dishes ready in `supabase/menu_aryas_full_menu_TEMPLATE.sql`, which refuses to run until every price is filled in.
+- Photos for every remaining dish: 11 Aryas (larger versions replace 4 small ones) and all 17 AHIL Diwali items (`public/menu/ahil/`). `menu_photos_2026-10-26.sql` now covers all 37 dishes.
 
 ## 0.2.0 — Mon 26 Oct 2026 (festive theme)
 
