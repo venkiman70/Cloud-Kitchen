@@ -51,8 +51,9 @@ export function slotsFor(
   opts: { timeZone: string; hours: Record<string, [string, string] | null>; slotMinutes: number; leadMinutes: number },
 ): { iso: string; label: string }[] {
   const key = dayKey(dateStr);
-  const hasHours = Object.keys(opts.hours ?? {}).length > 0;
-  const h = hasHours ? opts.hours[key] : DEFAULT_HOURS;
+  // Same rule as create_order(): a day missing from pickup_hours is open (default hours); null = closed.
+  const hours = opts.hours ?? {};
+  const h = key in hours ? hours[key] : DEFAULT_HOURS;
   if (!h) return [];
   const [oh, om] = h[0].split(":").map(Number);
   const [ch, cm] = h[1].split(":").map(Number);

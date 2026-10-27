@@ -12,8 +12,8 @@ values ('0fb0f7f5-15f9-5968-88e5-76377bd2ed13', 'America/Chicago', 'usd', 825, 2
   'Pickup at Suite 104. Call or WhatsApp +1 945 954 1827 when you arrive.', false, 400)
 on conflict (tenant_id) do nothing;
 insert into public.brands (id, tenant_id, slug, name, tagline, theme, order_prefix, sort) values
-  ('25c78a6d-48b6-5b28-85b4-bcaf19af08c9', '0fb0f7f5-15f9-5968-88e5-76377bd2ed13', 'aryas', 'Aryas Cuisine', 'Indian soul food, made with love', '{"accent":"#2f6b3a","accentInk":"#ffffff"}', 'AC', 1),
-  ('0bc8d28a-dd02-5760-89c1-4af7fc872363', '0fb0f7f5-15f9-5968-88e5-76377bd2ed13', 'ahil', 'AHIL', 'Bringing joy in every bite', '{"accent":"#7b1d2a","accentInk":"#ffffff"}', 'AH', 2)
+  ('25c78a6d-48b6-5b28-85b4-bcaf19af08c9', '0fb0f7f5-15f9-5968-88e5-76377bd2ed13', 'aryas', 'Aryas Cuisine', 'Indian soul food, made with love', '{"accent":"#7A2318","accentInk":"#FFF8EC","accentDark":"#F08A3C","accentInkDark":"#1E1410","logo":"/brand/aryas-lockup.svg","logoStacked":"/brand/aryas-logo.svg"}', 'AC', 1),
+  ('0bc8d28a-dd02-5760-89c1-4af7fc872363', '0fb0f7f5-15f9-5968-88e5-76377bd2ed13', 'ahil', 'AHIL', 'Bringing joy in every bite', '{"accent":"#2463B5","accentInk":"#FFFFFF","accentDark":"#7FB2F0","accentInkDark":"#0E1D33","logo":"/brand/ahil-lockup.svg","logoStacked":"/brand/ahil-logo.svg"}', 'AH', 2)
 on conflict do nothing;
 insert into public.menu_collections (id, tenant_id, brand_id, slug, name, ends_at, order_cutoff_at, pickup_dates, is_preorder)
 values ('637cc9dd-c666-5ccf-9cbb-5f3ff5279d04', '0fb0f7f5-15f9-5968-88e5-76377bd2ed13', '0bc8d28a-dd02-5760-89c1-4af7fc872363', 'diwali-2026', 'Diwali 2026 pre-orders', '2026-11-09 00:00:00-06',

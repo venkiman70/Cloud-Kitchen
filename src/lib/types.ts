@@ -5,7 +5,12 @@ export type Brand = {
   slug: string;
   name: string;
   tagline: string | null;
-  theme: { accent?: string; accentInk?: string; logoUrl?: string };
+  theme: {
+    accent?: string; accentInk?: string;          // light mode
+    accentDark?: string; accentInkDark?: string;  // dark mode
+    logo?: string;          // horizontal lockup for headers
+    logoStacked?: string;   // square logo for cards
+  };
 };
 
 export type Collection = {

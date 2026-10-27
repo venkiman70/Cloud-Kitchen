@@ -2,43 +2,70 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Theme tokens. --accent / --accent-ink are set per brand at runtime from brands.theme. */
+/*
+  Festive kitchen theme from the Aryas / AHIL artwork:
+  warm cream paper, deep maroon ink, marigold and turmeric, banana-leaf green.
+  --accent / --accent-ink come from each brand's theme (brands.theme) at runtime:
+  Aryas = maroon, AHIL = royal blue, with lighter versions for dark mode.
+*/
 :root {
-  --bg: 246 245 239; --surface: 255 255 255; --sunk: 238 237 228; --line: 220 218 205;
-  --fg: 29 34 25; --muted: 95 102 87;
-  --veg: 31 138 59; --nonveg: 179 38 30; --egg: 199 122 0; --gold: 200 144 42;
-  --accent: #2f6b3a; --accent-ink: #ffffff;
+  --bg: 251 243 226;       /* cream paper */
+  --surface: 255 252 245;  /* card */
+  --sunk: 244 230 203;     /* inset panels, chips */
+  --line: 232 212 175;     /* hairlines */
+  --fg: 58 26 18;          /* deep brown ink */
+  --muted: 122 88 68;
+  --veg: 31 138 59; --nonveg: 179 38 30; --egg: 199 122 0;
+  --gold: 232 178 58; --marigold: 244 161 31; --leaf: 63 122 43;
+  --accent-l: #7A2318; --accent-ink-l: #FFF8EC;
+  --accent-d: #F08A3C; --accent-ink-d: #1E1410;
+  --accent: var(--accent-l); --accent-ink: var(--accent-ink-l);
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: 20 23 18; --surface: 29 33 26; --sunk: 37 42 33; --line: 54 60 49;
-    --fg: 236 239 229; --muted: 163 171 152;
-    --veg: 76 193 106; --nonveg: 255 122 110; --egg: 242 168 58; --gold: 230 179 90;
+    --bg: 30 20 16; --surface: 42 29 23; --sunk: 52 37 29; --line: 78 56 43;
+    --fg: 248 236 216; --muted: 204 178 150;
+    --veg: 92 196 112; --nonveg: 255 128 112; --egg: 244 172 64;
+    --gold: 236 190 90; --marigold: 247 176 60; --leaf: 120 180 92;
+    --accent: var(--accent-d); --accent-ink: var(--accent-ink-d);
     color-scheme: dark;
   }
 }
+/* Kitchen screen is always dark, high contrast */
 .kitchen-dark {
-  --bg: 14 16 13; --surface: 26 30 24; --sunk: 36 41 33; --line: 58 64 52;
-  --fg: 240 243 234; --muted: 168 176 158;
-  --veg: 76 193 106; --nonveg: 255 122 110; --egg: 242 168 58;
+  --bg: 22 15 12; --surface: 36 25 20; --sunk: 46 33 26; --line: 74 54 42;
+  --fg: 250 240 224; --muted: 210 186 160;
+  --veg: 92 196 112; --nonveg: 255 128 112; --egg: 244 172 64;
+  --accent: var(--accent-d); --accent-ink: var(--accent-ink-d);
   color-scheme: dark;
 }
 
 html, body, #root { min-height: 100%; }
-body { @apply bg-bg text-fg font-sans antialiased; }
+body {
+  @apply bg-bg text-fg font-sans antialiased;
+  background-image:
+    radial-gradient(1200px 400px at 10% -10%, rgb(var(--marigold) / .10), transparent 60%),
+    radial-gradient(900px 380px at 100% 0%, rgb(var(--leaf) / .07), transparent 60%);
+  background-attachment: fixed;
+}
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 @layer components {
-  .wrap { @apply mx-auto w-full max-w-5xl px-4; }
-  .btn { @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-line bg-surface px-4 font-semibold transition active:scale-[0.98] disabled:opacity-50; }
-  .btn-primary { @apply btn border-transparent; background: var(--accent); color: var(--accent-ink); }
+  .wrap { @apply mx-auto w-full max-w-5xl; padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
+  .btn { @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-line bg-surface px-5 font-semibold transition active:scale-[0.98] disabled:opacity-50; }
+  .btn-primary { @apply btn border-transparent shadow-sm; background: var(--accent); color: var(--accent-ink); }
   .input { @apply min-h-[44px] w-full rounded-xl border border-line bg-surface px-3 text-base; }
   .label { @apply text-sm font-semibold; }
   .card { @apply rounded-2xl border border-line bg-surface; }
-  .chip { @apply whitespace-nowrap rounded-full border border-line bg-surface px-3 py-1.5 text-sm font-medium; }
+  .chip { @apply whitespace-nowrap rounded-full border border-line bg-surface px-3.5 py-1.5 text-sm font-semibold; }
   .chip[aria-pressed="true"] { border-color: transparent; background: var(--accent); color: var(--accent-ink); }
   .tag { @apply rounded-md bg-sunk px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-muted; }
+  /* Marigold garland strip (toran) */
+  .toran { height: 34px; background: url("/brand/toran.svg") repeat-x left top / auto 34px; }
+  .eyebrow { @apply text-xs font-bold uppercase tracking-[0.18em] text-muted; }
+  .h-display { font-family: "Rozha One", Georgia, serif; font-weight: 400; letter-spacing: .01em; }
+  .script { font-family: "Kaushan Script", "Brush Script MT", cursive; }
 }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }

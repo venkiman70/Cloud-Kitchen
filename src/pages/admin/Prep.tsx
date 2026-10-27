@@ -25,7 +25,7 @@ export default function Prep() {
   return (
     <main className="wrap py-6">
       <div className="flex flex-wrap items-end gap-3">
-        <h1 className="flex-1 font-display text-3xl">Prep list</h1>
+        <h1 className="flex-1 h-display text-3xl">Prep list</h1>
         <label className="flex flex-col gap-1">
           <span className="label">Pickup date</span>
           <input type="date" className="input" value={date} onChange={(e) => setDate(e.target.value)} />
@@ -36,7 +36,7 @@ export default function Prep() {
       {q.data?.length === 0 && <p className="py-10 text-center text-muted">No paid orders for this date yet.</p>}
       {Object.entries(byBrand).map(([brand, rows]) => (
         <section key={brand} className="mt-6">
-          <h2 className="mb-2 font-display text-xl">{brand}</h2>
+          <h2 className="mb-2 h-display text-xl">{brand}</h2>
           <div className="card overflow-x-auto">
             <table className="w-full text-left tabular-nums">
               <thead className="text-sm text-muted"><tr><th className="p-3">Item</th><th className="p-3">Pack</th><th className="p-3 text-right">Quantity</th><th className="p-3 text-right">Orders</th></tr></thead>

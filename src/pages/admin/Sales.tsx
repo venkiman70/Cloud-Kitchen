@@ -41,7 +41,7 @@ export default function Sales() {
   return (
     <main className="wrap py-6">
       <div className="flex flex-wrap items-end gap-3">
-        <h1 className="flex-1 font-display text-3xl">Sales</h1>
+        <h1 className="flex-1 h-display text-3xl">Sales</h1>
         <label className="flex flex-col gap-1"><span className="label">Orders placed on</span>
           <input type="date" className="input" value={date} onChange={(e) => setDate(e.target.value)} /></label>
       </div>

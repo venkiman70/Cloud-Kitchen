@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.0 — Mon 26 Oct 2026 (festive theme)
+
+- New look from the Aryas / AHIL artwork: cream paper, maroon and marigold for Aryas, royal blue for AHIL, banana-leaf green, marigold garland strip on every customer page.
+- Vector logos (stacked and horizontal) for both brands in `public/brand/`, plus a new app icon; logos come from `brands.theme` so other kitchens can use their own.
+- Fonts bundled with the app (Rozha One, Kaushan Script, Figtree) instead of loading from Google.
+- Dark mode: logos sit on a cream plate so they stay readable; brand colours have dark-mode versions.
+- Checkout has the brand header; roomier cart rows on phones.
+- Fix: a weekday missing from pickup hours now counts as open in the app, matching the database.
+- Real Aryas menu from Uber Eats (`supabase/menu_aryas_ubereats_2026-10-26.sql`) and brand theme SQL (`supabase/brand_theme_2026-10-26.sql`).
+
 ## 0.1.0 — Mon 26 Oct 2026 (Day 1)
 
 First cut of the Diwali fast-track.

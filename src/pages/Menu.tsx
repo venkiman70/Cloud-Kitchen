@@ -7,6 +7,7 @@ import { money } from "../lib/format";
 import { dateLabel } from "../lib/time";
 import type { MenuItem } from "../lib/types";
 import { DietMark, FullPage, Spinner, SPICE } from "../components/ui";
+import { BrandMark } from "../components/BrandMark";
 
 const MENU_SELECT =
   "id,name,description,diet,protein,spice,allergens,is_vegan,is_jain,image_url,is_available,is_catering_only,is_sample,sort,collection_id," +
@@ -70,19 +71,19 @@ export default function Menu() {
   return (
     <div className="pb-28">
       <header className="sticky top-0 z-10 border-b border-line bg-surface/95 backdrop-blur" style={{ paddingTop: "env(safe-area-inset-top)" }}>
-        <div className="wrap flex items-center gap-3 py-3">
-          {store.brands.length > 1 && <Link to="/" className="text-sm text-muted" aria-label="All menus">←</Link>}
+        <div className="wrap flex items-center gap-3 py-2">
+          {store.brands.length > 1 && <Link to="/" className="btn min-h-[40px] px-3 text-sm" aria-label="All menus">←</Link>}
           <div className="min-w-0 flex-1">
-            <div className="truncate font-display text-2xl" style={{ color: "var(--accent)" }}>{brand.name}</div>
-            {brand.tagline && <div className="truncate text-xs text-muted">{brand.tagline}</div>}
+            <BrandMark brand={brand} className="h-12 w-auto max-w-full sm:h-14" />
           </div>
         </div>
+        <div className="toran opacity-90" aria-hidden="true" />
       </header>
 
       <main className="wrap pt-4">
         {collections.map((c) => (
-          <div key={c.id} className="mb-4 rounded-2xl border px-4 py-3" style={{ borderColor: "rgb(var(--gold) / .5)", background: "rgb(var(--gold) / .1)" }}>
-            <div className="font-display text-xl">{c.name}</div>
+          <div key={c.id} className="mb-4 rounded-2xl border-2 border-dashed px-4 py-3" style={{ borderColor: "rgb(var(--marigold) / .7)", background: "rgb(var(--marigold) / .12)" }}>
+            <div className="h-display text-2xl" style={{ color: "var(--accent)" }}>{c.name}</div>
             <div className="text-sm text-muted">
               {c.pickupDates?.length ? <>Pickup on {c.pickupDates.map((d) => dateLabel(d, store.settings.timezone)).join(", ")}. </> : null}
               {c.orderCutoffAt && <>Order by {new Intl.DateTimeFormat("en-US", { timeZone: store.settings.timezone, weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(c.orderCutoffAt))}.</>}
@@ -111,10 +112,12 @@ export default function Menu() {
 
         {Object.entries(groups).map(([name, list]) => (
           <section key={name} className="mt-6">
-            <h2 className="mb-2 font-display text-xl">{name}</h2>
+            <h2 className="h-display mb-3 flex items-center gap-3 text-2xl" style={{ color: "var(--accent)" }}>
+              {name}<span className="h-px flex-1" style={{ background: "linear-gradient(90deg, rgb(var(--marigold) / .7), transparent)" }} />
+            </h2>
             <div className="grid gap-3 sm:grid-cols-2">
               {list.map((i) => (
-                <article key={i.id} className={`card flex gap-3 p-3 ${i.is_available ? "" : "opacity-60"}`}>
+                <article key={i.id} className={`card flex gap-3 p-4 shadow-sm transition hover:shadow-md ${i.is_available ? "" : "opacity-60"}`}>
                   <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                     <h3 className="flex items-start gap-2 font-bold"><DietMark diet={i.diet} /><span>{i.name}</span></h3>
                     {i.description && <p className="text-sm text-muted">{i.description}</p>}
@@ -128,7 +131,7 @@ export default function Menu() {
                     <div className="mt-1 flex flex-wrap gap-2">
                       {i.variants.map((v) => (
                         <button key={v.id} disabled={!i.is_available}
-                          className="flex min-h-[40px] items-center gap-2 rounded-lg border border-line px-3 text-sm font-semibold tabular-nums disabled:cursor-not-allowed"
+                          className="flex min-h-[40px] items-center gap-2 rounded-full border-2 px-3.5 text-sm font-bold tabular-nums transition hover:bg-sunk disabled:cursor-not-allowed" style={{ borderColor: "var(--accent)" }}
                           onClick={() => {
                             cart.add({ variantId: v.id, itemId: i.id, name: i.name, label: v.label, priceCents: v.price_cents, diet: i.diet, collectionId: i.collection_id });
                             setAdded(`${i.name}${i.variants.length > 1 ? ` (${v.label})` : ""}`);

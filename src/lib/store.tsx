@@ -58,9 +58,13 @@ export function useBrand(slug: string | undefined): Brand | undefined {
   const brand = store.brands.find((b) => b.slug === slug);
   useEffect(() => {
     const root = document.documentElement;
-    const accent = brand?.theme.accent ?? store.brands[0]?.theme.accent ?? "#2f6b3a";
-    root.style.setProperty("--accent", accent);
-    root.style.setProperty("--accent-ink", brand?.theme.accentInk ?? "#ffffff");
+    const t = brand?.theme ?? store.brands[0]?.theme ?? {};
+    const accent = t.accent ?? "#7A2318";
+    // Light and dark accents; index.css picks the right pair for the viewer's theme.
+    root.style.setProperty("--accent-l", accent);
+    root.style.setProperty("--accent-ink-l", t.accentInk ?? "#FFF8EC");
+    root.style.setProperty("--accent-d", t.accentDark ?? accent);
+    root.style.setProperty("--accent-ink-d", t.accentInkDark ?? t.accentInk ?? "#1E1410");
     document.querySelector('meta[name="theme-color"]')?.setAttribute("content", accent);
     document.title = brand ? `${brand.name}: order online` : `${store.tenant.name}: order online`;
   }, [brand, store]);

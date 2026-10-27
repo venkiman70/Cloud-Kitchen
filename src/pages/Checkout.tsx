@@ -5,6 +5,7 @@ import { savedCustomer, useBrand, useCart, useStore } from "../lib/store";
 import { formatPhone, money, taxPreview } from "../lib/format";
 import { dateLabel, slotsFor, todayIn } from "../lib/time";
 import { DietMark, FullPage, Notice } from "../components/ui";
+import { BrandMark } from "../components/BrandMark";
 
 export default function Checkout() {
   const { brandSlug } = useParams();
@@ -82,9 +83,16 @@ export default function Checkout() {
   }
 
   return (
+    <>
+    <header className="border-b border-line bg-surface" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+      <div className="wrap flex max-w-2xl items-center gap-3 py-2">
+        <Link to={`/${brand.slug}`} className="btn min-h-[40px] px-3 text-sm" aria-label={`Back to ${brand.name}`}>←</Link>
+        <BrandMark brand={brand} className="h-12 w-auto max-w-full" />
+      </div>
+      <div className="toran" aria-hidden="true" />
+    </header>
     <main className="wrap max-w-2xl py-6 pb-16">
-      <Link to={`/${brand.slug}`} className="text-sm text-muted">← Back to {brand.name}</Link>
-      <h1 className="mt-2 font-display text-3xl">Your order</h1>
+      <h1 className="h-display text-3xl" style={{ color: "var(--accent)" }}>Your order</h1>
 
       {params.get("cancelled") && (
         <div className="mt-4"><Notice tone="warn">Payment was cancelled, so order {params.get("cancelled")} wasn't placed. Your cart is still here.</Notice></div>
@@ -92,11 +100,11 @@ export default function Checkout() {
 
       <section className="card mt-4 divide-y divide-line">
         {cart.lines.map((l) => (
-          <div key={l.variantId} className="flex items-center gap-3 p-3">
+          <div key={l.variantId} className="flex flex-wrap items-center gap-x-3 gap-y-2 p-4">
             <DietMark diet={l.diet} />
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 basis-40">
               <div className="font-semibold">{l.name}</div>
-              <div className="text-sm text-muted">{l.label} · {money(l.priceCents, s.currency)}</div>
+              <div className="text-sm text-muted">{l.label} · {money(l.priceCents, s.currency)} each</div>
             </div>
             <div className="flex items-center gap-1" role="group" aria-label={`Quantity of ${l.name}`}>
               <button type="button" className="btn h-10 min-h-0 w-10 px-0" aria-label="Remove one" onClick={() => cart.setQty(l.variantId, l.quantity - 1)}>−</button>
@@ -174,5 +182,6 @@ export default function Checkout() {
         <p className="-mt-3 text-center text-xs text-muted">Card, Apple Pay or Google Pay on Stripe's secure page. We never see your card number.</p>
       </form>
     </main>
+    </>
   );
 }

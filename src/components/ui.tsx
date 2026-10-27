@@ -27,7 +27,7 @@ export function Notice({ tone = "info", children }: { tone?: "info" | "warn" | "
 export function FullPage({ title, children }: { title: string; children?: ReactNode }) {
   return (
     <div className="wrap flex min-h-[60vh] flex-col items-center justify-center gap-3 py-16 text-center">
-      <h1 className="font-display text-3xl">{title}</h1>
+      <h1 className="h-display text-3xl">{title}</h1>
       {children && <div className="max-w-md text-muted">{children}</div>}
     </div>
   );

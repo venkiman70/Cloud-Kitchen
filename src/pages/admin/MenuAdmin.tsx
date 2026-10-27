@@ -47,7 +47,7 @@ export default function MenuAdmin() {
   const rows = (q.data ?? []).filter((r) => !search || r.name.toLowerCase().includes(search.toLowerCase()));
   return (
     <main className="wrap py-6">
-      <h1 className="font-display text-3xl">Menu</h1>
+      <h1 className="h-display text-3xl">Menu</h1>
       <p className="mt-1 text-muted">Tap a switch to sell an item out. Customers see it within seconds.{isManager ? " Edit a price and press Enter to save." : ""}</p>
       <input className="input mt-4 max-w-sm" type="search" placeholder="Search products" aria-label="Search products" value={search} onChange={(e) => setSearch(e.target.value)} />
       {msg && <div className="mt-3"><Notice tone={msg.tone}>{msg.text}</Notice></div>}

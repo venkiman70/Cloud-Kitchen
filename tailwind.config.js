@@ -16,9 +16,12 @@ export default {
         nonveg: "rgb(var(--nonveg) / <alpha-value>)",
         egg: "rgb(var(--egg) / <alpha-value>)",
         gold: "rgb(var(--gold) / <alpha-value>)",
+        marigold: "rgb(var(--marigold) / <alpha-value>)",
+        leaf: "rgb(var(--leaf) / <alpha-value>)",
       },
       fontFamily: {
-        display: ['"Young Serif"', "Georgia", "serif"],
+        display: ['"Rozha One"', "Georgia", "serif"],
+        script: ['"Kaushan Script"', "cursive"],
         sans: ["Figtree", "system-ui", "-apple-system", "Segoe UI", "sans-serif"],
       },
     },

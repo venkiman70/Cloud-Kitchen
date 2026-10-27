@@ -10,6 +10,9 @@
     "typecheck": "tsc -b --noEmit"
   },
   "dependencies": {
+    "@fontsource/figtree": "5.1.0",
+    "@fontsource/kaushan-script": "5.1.0",
+    "@fontsource/rozha-one": "5.1.0",
     "@supabase/supabase-js": "2.46.1",
     "@tanstack/react-query": "5.59.20",
     "react": "18.3.1",

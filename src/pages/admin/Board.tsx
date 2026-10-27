@@ -100,7 +100,7 @@ export default function Board({ kitchen = false }: { kitchen?: boolean }) {
     <div className={kitchen ? "kitchen-dark min-h-screen bg-bg text-fg" : ""}>
       <div className={kitchen ? "px-4 py-3" : "wrap max-w-none py-4"}>
         <div className="mb-3 flex flex-wrap items-center gap-3">
-          {kitchen && <span className="font-display text-2xl">{member.name} · Kitchen</span>}
+          {kitchen && <span className="h-display text-2xl">{member.name} · Kitchen</span>}
           <span className="flex-1" />
           {!live && <span className="rounded-full bg-nonveg px-3 py-1 text-sm font-bold text-white">Offline: retrying</span>}
           {!chime.on && <button className="btn-primary" onClick={chime.enable}>Turn on new-order sound</button>}
@@ -125,7 +125,7 @@ export default function Board({ kitchen = false }: { kitchen?: boolean }) {
             const list = current.filter((o) => o.status === col.status);
             return (
               <section key={col.status} className="flex min-w-0 flex-col gap-3 rounded-2xl bg-sunk p-3">
-                <h2 className="flex items-center justify-between font-display text-xl">{col.title}<span className="text-base text-muted">{list.length}</span></h2>
+                <h2 className="flex items-center justify-between h-display text-xl">{col.title}<span className="text-base text-muted">{list.length}</span></h2>
                 {list.length === 0 && <p className="py-6 text-center text-sm text-muted">No orders</p>}
                 {list.map((o) => {
                   const mins = Math.round((new Date(o.pickupAt).getTime() - Date.now()) / 60000);
@@ -135,7 +135,7 @@ export default function Board({ kitchen = false }: { kitchen?: boolean }) {
                     <article key={o.id} className={`card border-2 ${urgent} ${fresh.has(o.id) ? "ring-4 ring-[color:var(--accent)]" : ""} flex flex-col gap-2 p-3`}>
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <div className={`font-display ${kitchen ? "text-3xl" : "text-2xl"}`}>{o.orderNumber}</div>
+                          <div className={`h-display ${kitchen ? "text-3xl" : "text-2xl"}`}>{o.orderNumber}</div>
                           <div className="text-sm text-muted">{o.firstName || "Guest"} · {o.brand} · {o.channel.replace("_", " ")}</div>
                         </div>
                         <div className="text-right">

@@ -37,7 +37,7 @@ function Login() {
   }
   return (
     <main className="wrap flex min-h-[80vh] max-w-sm flex-col justify-center gap-4">
-      <h1 className="font-display text-3xl">Staff sign in</h1>
+      <h1 className="h-display text-3xl">Staff sign in</h1>
       {state === "sent" ? (
         <Notice tone="ok">Check {email} for a sign-in link. Open it on this device.</Notice>
       ) : (
@@ -110,7 +110,7 @@ function AdminNav() {
   return (
     <header className="border-b border-line bg-surface" style={{ paddingTop: "env(safe-area-inset-top)" }}>
       <div className="wrap flex flex-wrap items-center gap-2 py-3">
-        <span className="mr-2 font-display text-xl">{member.name}</span>
+        <span className="mr-2 h-display text-xl">{member.name}</span>
         <nav className="flex flex-wrap gap-2">
           <NavLink to="/admin" end className={link}>Orders</NavLink>
           <NavLink to="/admin/prep" className={link}>Prep list</NavLink>

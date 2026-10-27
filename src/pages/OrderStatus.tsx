@@ -53,7 +53,7 @@ export default function OrderStatus() {
   return (
     <main className="wrap max-w-xl py-8">
       <p className="text-sm text-muted">{o.brandName}</p>
-      <h1 className="font-display text-3xl">Order {o.orderNumber}</h1>
+      <h1 className="h-display text-3xl">Order {o.orderNumber}</h1>
       <p className="mt-1 text-muted">{o.customerName ? `${o.customerName}, ` : ""}pickup {fmtPickup(o.pickupAt, o.timezone)}</p>
 
       <div className="mt-5">
