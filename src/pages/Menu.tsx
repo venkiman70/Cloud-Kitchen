@@ -143,7 +143,7 @@ export default function Menu() {
                       ))}
                     </div>
                   </div>
-                  {i.image_url && <img src={i.image_url} alt="" className="h-24 w-24 flex-none rounded-xl object-cover" loading="lazy" />}
+                  {i.image_url && <img src={i.image_url} alt={i.name} className="h-28 w-28 flex-none self-start rounded-xl object-cover shadow-sm sm:h-32 sm:w-32" loading="lazy" />}
                 </article>
               ))}
             </div>

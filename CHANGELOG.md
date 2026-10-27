@@ -6,6 +6,7 @@
 - Colours matched to the artwork: Aryas leaf green, AHIL sky blue, dark-brown lettering; each brand card keeps its own colour.
 - New `tenant_settings.banner_url` (migration 0004) so each kitchen can have its own banner.
 - Paste-in file for existing projects: `supabase/branding_2026-10-26.sql` (replaces brand_theme_2026-10-26.sql).
+- Dish photos for 9 Aryas items (`public/menu/aryas/`, set by `supabase/menu_photos_2026-10-26.sql`); larger photos on menu cards; admin Menu shows a thumbnail or a "No photo" tag.
 
 ## 0.2.0 — Mon 26 Oct 2026 (festive theme)
 

@@ -7,7 +7,7 @@ import { DietMark, Notice, Spinner } from "../../components/ui";
 import { useAdmin } from "./AdminShell";
 
 type Row = {
-  id: string; name: string; diet: Diet; is_available: boolean; is_sample: boolean; deleted_at: string | null;
+  id: string; name: string; diet: Diet; is_available: boolean; is_sample: boolean; deleted_at: string | null; image_url: string | null;
   brand: { name: string; sort: number } | null; category: { name: string; sort: number } | null;
   variants: { id: string; label: string; price_cents: number; deleted_at: string | null }[];
 };
@@ -22,7 +22,7 @@ export default function MenuAdmin() {
     queryKey: ["menu-admin", member.tenantId],
     queryFn: async () => {
       const { data, error } = await supabase.from("menu_items")
-        .select("id,name,diet,is_available,is_sample,deleted_at,brand:brands(name,sort),category:menu_categories(name,sort),variants:item_variants(id,label,price_cents,deleted_at)")
+        .select("id,name,diet,is_available,is_sample,deleted_at,image_url,brand:brands(name,sort),category:menu_categories(name,sort),variants:item_variants(id,label,price_cents,deleted_at)")
         .eq("tenant_id", member.tenantId).is("deleted_at", null);
       if (error) throw error;
       return (data as unknown as Row[]).sort((a, b) =>
@@ -55,9 +55,11 @@ export default function MenuAdmin() {
       <div className="card mt-4 divide-y divide-line">
         {rows.map((r) => (
           <div key={r.id} className="flex flex-wrap items-center gap-3 p-3">
-            <DietMark diet={r.diet} />
+            {r.image_url
+              ? <img src={r.image_url} alt="" className="h-12 w-12 flex-none rounded-lg object-cover" loading="lazy" />
+              : <span className="grid h-12 w-12 flex-none place-items-center rounded-lg bg-sunk"><DietMark diet={r.diet} /></span>}
             <div className="min-w-0 flex-1">
-              <div className="font-semibold">{r.name} {r.is_sample && <span className="tag !bg-[#fff1d6] !text-[#7a4a00]">Sample</span>}</div>
+              <div className="font-semibold">{r.name} {r.is_sample && <span className="tag !bg-[#fff1d6] !text-[#7a4a00]">Sample</span>}{!r.image_url && <span className="tag ml-1">No photo</span>}</div>
               <div className="text-sm text-muted">{r.brand?.name} · {r.category?.name}</div>
             </div>
             <div className="flex flex-wrap gap-2">
