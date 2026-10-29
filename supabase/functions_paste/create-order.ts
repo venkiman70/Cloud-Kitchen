@@ -1,9 +1,11 @@
-// create-order: validates and prices the cart in Postgres (create_order), then
-// opens a Stripe Checkout Session for it. The browser never sends a trusted price.
+// create-order: validates and prices the cart in Postgres (create_order), then either
+// opens a Stripe Checkout Session for it, or (pay at pickup) sends it straight to the
+// kitchen as confirmed and unpaid. The browser never sends a trusted price.
 //
-// POST { tenant, brand, pickupAt, notes?, customer: {name, phone, email?, optInEmail?, optInSms?},
+// POST { tenant, brand, pickupAt, notes?, payAtPickup?, customer: {name, phone, email?, optInEmail?, optInSms?},
 //        items: [{variantId, quantity}] }
-// 200  { url, orderNumber, publicToken }
+// 200  { url, orderNumber, publicToken }            (pay now: redirect to url)
+// 200  { payAtPickup: true, orderNumber, publicToken } (pay at pickup: no redirect)
 // 4xx  { error: <customer-friendly message>, code }
 
 import Stripe from "npm:stripe@17.7.0";
@@ -45,6 +47,95 @@ export function appUrl(req: Request): string {
   return fallback.replace(/\/$/, "");
 }
 
+// ---- inlined from _shared/email.ts ----
+// Transactional email through Resend. If RESEND_API_KEY is missing, emails are
+// logged and skipped so local and staging setups still work.
+
+export type Receipt = {
+  orderNumber: string;
+  publicToken: string;
+  customerName?: string | null;
+  customerEmail?: string | null;
+  pickupAt: string;
+  timezone: string;
+  currency: string;
+  brandName: string;
+  tenantName: string;
+  address?: string | null;
+  pickupInstructions?: string | null;
+  subtotalCents: number;
+  taxCents: number;
+  totalCents: number;
+  paymentStatus?: string | null;
+  payAtPickup?: boolean | null;
+  items: { name: string; variant?: string | null; quantity: number; lineTotalCents: number }[];
+};
+
+const esc = (s: unknown) =>
+  String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+
+export const money = (cents: number, currency = "usd") =>
+  new Intl.NumberFormat("en-US", { style: "currency", currency: currency.toUpperCase() }).format(cents / 100);
+
+export const pickupText = (iso: string, timeZone: string) =>
+  new Intl.DateTimeFormat("en-US", {
+    timeZone, weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+  }).format(new Date(iso));
+
+function layout(r: Receipt, heading: string, intro: string, statusUrl: string): string {
+  const due = r.paymentStatus === "unpaid";
+  const rows = (r.items ?? []).map((i) =>
+    `<tr><td style="padding:6px 0">${i.quantity} × ${esc(i.name)}${i.variant ? ` <span style="color:#666">(${esc(i.variant)})</span>` : ""}</td>
+     <td style="padding:6px 0;text-align:right">${money(i.lineTotalCents, r.currency)}</td></tr>`
+  ).join("");
+  return `<!doctype html><html><body style="font-family:Arial,Helvetica,sans-serif;color:#1d2219;max-width:520px;margin:0 auto;padding:16px">
+  <p style="font-size:13px;color:#666;margin:0">${esc(r.brandName)}</p>
+  <h1 style="font-size:22px;margin:4px 0 12px">${esc(heading)}</h1>
+  <p style="margin:0 0 12px">${esc(intro)}</p>
+  <p style="margin:0 0 4px"><b>Order ${esc(r.orderNumber)}</b></p>
+  <p style="margin:0 0 16px">Pickup: ${esc(pickupText(r.pickupAt, r.timezone))}${r.address ? `<br>${esc(r.address)}` : ""}</p>
+  <table style="width:100%;border-collapse:collapse;font-size:14px">${rows}
+    <tr><td style="padding:6px 0;border-top:1px solid #ddd">Subtotal</td><td style="padding:6px 0;border-top:1px solid #ddd;text-align:right">${money(r.subtotalCents, r.currency)}</td></tr>
+    <tr><td style="padding:2px 0">Sales tax</td><td style="padding:2px 0;text-align:right">${money(r.taxCents, r.currency)}</td></tr>
+    <tr><td style="padding:6px 0"><b>${due ? "Total to pay at pickup" : "Total paid"}</b></td><td style="padding:6px 0;text-align:right"><b>${money(r.totalCents, r.currency)}</b></td></tr>
+  </table>
+  ${r.pickupInstructions ? `<p style="margin:16px 0 0;font-size:14px">${esc(r.pickupInstructions)}</p>` : ""}
+  <p style="margin:20px 0"><a href="${esc(statusUrl)}" style="background:#2f6b3a;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none">View order status</a></p>
+  <p style="font-size:12px;color:#888">${esc(r.tenantName)}</p>
+  </body></html>`;
+}
+
+async function send(to: string, subject: string, html: string): Promise<boolean> {
+  const key = Deno.env.get("RESEND_API_KEY");
+  const from = Deno.env.get("EMAIL_FROM") ?? "Orders <onboarding@resend.dev>";
+  if (!key) {
+    console.log(`[email skipped: no RESEND_API_KEY] to=${to} subject=${subject}`);
+    return false;
+  }
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ from, to, subject, html }),
+  });
+  if (!res.ok) console.error("Resend error", res.status, await res.text());
+  return res.ok;
+}
+
+export function sendReceipt(r: Receipt, appUrl: string) {
+  if (!r.customerEmail) return Promise.resolve(false);
+  const first = (r.customerName ?? "").split(" ")[0];
+  return send(r.customerEmail, `${r.brandName}: order ${r.orderNumber} confirmed`,
+    layout(r, "Thanks for your order",
+      `${first ? first + ", w" : "W"}e've got your order and will have it ready for pickup.` +
+        (r.paymentStatus === "unpaid" ? " You'll pay when you pick it up." : ""),
+      `${appUrl}/order/${r.publicToken}`));
+}
+
+export function sendReady(r: Receipt, appUrl: string) {
+  if (!r.customerEmail) return Promise.resolve(false);
+  return send(r.customerEmail, `${r.brandName}: order ${r.orderNumber} is ready for pickup`,
+    layout(r, "Your order is ready", "Your order is packed and ready for pickup.", `${appUrl}/order/${r.publicToken}`));
+}
 // ---- end inlined ----
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") ?? "", { httpClient: Stripe.createFetchHttpClient() });
@@ -72,6 +163,8 @@ const MESSAGES: Record<string, (detail: string) => string> = {
   PICKUP_DATE_NOT_ALLOWED: (d) => `${d} can only be picked up on the listed pickup dates.`,
   SLOT_FULL: () => "That pickup time is full. Choose another time.",
   LIMIT_REACHED: (d) => `We've reached the limit for ${d} on that day. Lower the quantity or pick another day.`,
+  PAY_AT_PICKUP_OFF: () => "Pay at pickup isn't available right now. Choose Pay now to place your order.",
+  PAY_AT_PICKUP_LIMIT: (d) => `Pay at pickup is for orders up to ${d}. Choose Pay now for this order.`,
 };
 
 function friendly(message: string): { code: string; error: string } {
@@ -117,7 +210,25 @@ Deno.serve(async (req) => {
     return json(req, f, 422);
   }
 
-  // 2. Open a Stripe Checkout Session on the tenant's connected account (if any)
+  // 2a. Pay at pickup: confirm it for the kitchen, email the receipt, no Stripe
+  if (body.payAtPickup === true) {
+    const { data: receipt, error: payError } = await db.rpc("confirm_pay_at_pickup", { p_order: order.orderId });
+    if (payError || !receipt) {
+      await db.from("orders").update({ status: "cancelled" }).eq("id", order.orderId).eq("status", "pending_payment");
+      const f = friendly(payError?.message ?? "");
+      if (f.code === "UNKNOWN") console.error("confirm_pay_at_pickup failed", payError);
+      return json(req, f, 422);
+    }
+    if (order.customerEmail) {
+      const site = appUrl(req);
+      if (await sendReceipt(receipt as Receipt, site)) {
+        await db.from("orders").update({ receipt_sent_at: new Date().toISOString() }).eq("id", order.orderId);
+      }
+    }
+    return json(req, { payAtPickup: true, orderNumber: order.orderNumber, publicToken: order.publicToken });
+  }
+
+  // 2b. Pay now: open a Stripe Checkout Session on the tenant's connected account (if any)
   const site = appUrl(req);
   const currency = order.currency ?? "usd";
   const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = order.lines.map(
@@ -136,6 +247,9 @@ Deno.serve(async (req) => {
     const session = await stripe.checkout.sessions.create(
       {
         mode: "payment",
+        // Pickup orders: cards (Apple Pay and Google Pay ride on "card") and Link only.
+        // Bank debits (ACH) take days to clear, so they're kept for catering.
+        payment_method_types: ["card", "link"],
         line_items: lineItems,
         customer_email: order.customerEmail ?? undefined,
         client_reference_id: order.orderId,

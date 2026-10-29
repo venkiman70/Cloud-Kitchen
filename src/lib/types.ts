@@ -36,6 +36,7 @@ export type StoreSettings = {
   whatsapp: string | null;
   pickupInstructions: string | null;
   payAtPickup: boolean;
+  payAtPickupMaxCents?: number | null;
   bannerUrl?: string | null;
 };
 
@@ -90,5 +91,11 @@ export type BoardOrder = {
   paidAt: string | null;
   firstName: string;
   notes: string | null;
+  paymentStatus: "unpaid" | "paid" | "partially_refunded" | "refunded" | "failed";
+  payAtPickup: boolean;
+  amountDueCents: number | null;
+  paidMethod: PayMethod | null;
   items: { name: string; variant: string | null; quantity: number; diet: Diet; station: string | null }[];
 };
+
+export type PayMethod = "stripe" | "cash" | "check" | "zelle" | "square" | "external";

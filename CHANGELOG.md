@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0 — Wed 28 Oct 2026 (Pay at pickup + Mark paid)
+
+- **Checkout:** when the kitchen allows it, customers choose **Pay now** (card, Apple Pay, Google Pay, Link) or **Pay at pickup**. Pay at pickup sends the order straight to the kitchen as confirmed and unpaid, emails a receipt that says "Total to pay at pickup", and is refused over the cap (`tenant_settings.pay_at_pickup_max_cents`, default $100). Aryas: on.
+- **Orders board and kitchen screen:** unpaid orders carry a PAY AT PICKUP banner with the amount due. In Ready, "Picked up" is replaced by **Mark paid by Cash / Check / Zelle / Card (Square)**; other columns have a "Paid?" button for early payers. Paid orders show how they were paid. Owners and managers can **Undo** a wrong tap before pickup.
+- **Rules in the database:** an unpaid order can't be marked Picked up (`NOT_PAID`). Each manual payment writes `payments` (method, who), `audit_log` (`mark_paid` / `undo_paid`) and the 4% fee to `platform_fee_ledger` as `invoice`.
+- **Stripe:** pickup checkouts offer cards and Link only, no bank debits (ACH takes days to clear; kept for catering). The webhook already confirms orders only when Stripe says `paid`.
+- Upcoming strip: "1 item" not "1 items".
+- **Database:** migration `20261028000006_pay_at_pickup.sql` (paste-in copy: `supabase/pay_at_pickup_2026-10-28.sql`). New tests in `supabase/tests/rls_and_orders_test.sql`. `scripts/build_paste_functions.py` regenerates `supabase/functions_paste/`.
+
 ## 0.3.0 — Tue 27 Oct 2026 (Menu manager)
 
 - **Admin → Menu** (owners and managers only; hidden from kitchen staff): dishes grouped by brand and category with photo, price, veg/non-veg mark and a Sold-out switch.

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { functionError, supabase } from "../lib/supabase";
-import { savedCustomer, useBrand, useCart, useStore } from "../lib/store";
+import { clearCart, savedCustomer, useBrand, useCart, useStore } from "../lib/store";
 import { formatPhone, money, taxPreview } from "../lib/format";
 import { dateLabel, slotsFor, todayIn } from "../lib/time";
 import { DietMark, FullPage, Notice } from "../components/ui";
@@ -23,6 +23,8 @@ export default function Checkout() {
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [payLater, setPayLater] = useState(false);
+  const navigate = useNavigate();
 
   // Pickup dates: pre-order collections restrict the dates; otherwise the next 7 days.
   const cartCollections = store.collections.filter((c) => cart.lines.some((l) => l.collectionId === c.id));
@@ -43,6 +45,9 @@ export default function Checkout() {
 
   const tax = taxPreview(cart.subtotal, s.taxRateBps);
   const total = cart.subtotal + tax;
+  const cap = s.payAtPickupMaxCents ?? null;
+  const pickupAllowed = s.payAtPickup && (cap === null || total <= cap);
+  const atPickup = payLater && pickupAllowed;
 
   if (!brand) return <FullPage title="Menu not found"><Link to="/" className="underline">See all menus</Link></FullPage>;
   if (cart.count === 0) {
@@ -69,16 +74,22 @@ export default function Checkout() {
         brand: brand!.slug,
         pickupAt: slot,
         notes,
+        payAtPickup: atPickup,
         customer: { name: name.trim(), phone: digits, email: email.trim() || null, optInEmail: optIn && Boolean(email), optInSms: optIn },
         items: cart.lines.map((l) => ({ variantId: l.variantId, quantity: l.quantity })),
       },
     });
-    if (error || !data?.url) {
+    if (error || !(data?.url || data?.payAtPickup)) {
       setBusy(false);
       setError(error ? await functionError(error) : "Payments aren't available right now. Try again in a minute.");
       return;
     }
     savedCustomer.set({ name: name.trim(), phone: formatPhone(digits), email: email.trim() });
+    if (data.payAtPickup) {
+      clearCart(store.tenant.slug, brand!.slug);
+      navigate(`/order/${data.publicToken}?placed=1`);
+      return;
+    }
     window.location.href = data.url; // Stripe Checkout
   }
 
@@ -174,12 +185,37 @@ export default function Checkout() {
           <div className="mt-1 flex justify-between border-t border-line pt-2 text-lg font-bold"><span>Total</span><span>{money(total, s.currency)}</span></div>
         </section>
 
+        {s.payAtPickup && (
+          <fieldset className="flex flex-col gap-2">
+            <legend className="mb-2 text-xs font-bold uppercase tracking-widest text-muted">Payment</legend>
+            <label className="card flex cursor-pointer items-start gap-3 p-4">
+              <input type="radio" name="pay" className="mt-1 h-5 w-5 flex-none" style={{ accentColor: "var(--accent)" }}
+                checked={!atPickup} onChange={() => setPayLater(false)} />
+              <span><span className="font-semibold">Pay now</span><br /><span className="text-sm text-muted">Card, Apple Pay or Google Pay</span></span>
+            </label>
+            <label className={`card flex items-start gap-3 p-4 ${pickupAllowed ? "cursor-pointer" : "opacity-60"}`}>
+              <input type="radio" name="pay" className="mt-1 h-5 w-5 flex-none" style={{ accentColor: "var(--accent)" }}
+                checked={atPickup} disabled={!pickupAllowed} onChange={() => setPayLater(true)} />
+              <span>
+                <span className="font-semibold">Pay at pickup</span><br />
+                <span className="text-sm text-muted">
+                  {pickupAllowed ? "Pay at the counter when you collect your order" : `Available for orders up to ${money(cap ?? 0, s.currency)}`}
+                </span>
+              </span>
+            </label>
+          </fieldset>
+        )}
+
         {error && <Notice tone="error">{error}</Notice>}
 
         <button type="submit" className="btn-primary min-h-[52px] text-lg" disabled={busy || !slot}>
-          {busy ? "Opening secure payment…" : `Pay ${money(total, s.currency)}`}
+          {atPickup
+            ? (busy ? "Placing your order…" : `Place order · pay ${money(total, s.currency)} at pickup`)
+            : (busy ? "Opening secure payment…" : `Pay ${money(total, s.currency)}`)}
         </button>
-        <p className="-mt-3 text-center text-xs text-muted">Card, Apple Pay or Google Pay on Stripe's secure page. We never see your card number.</p>
+        <p className="-mt-3 text-center text-xs text-muted">
+          {atPickup ? "Your order goes to the kitchen now. Please pay when you collect it." : "Card, Apple Pay or Google Pay on Stripe's secure page. We never see your card number."}
+        </p>
       </form>
     </main>
     </>

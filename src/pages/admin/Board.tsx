@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase";
-import { fmtPickup, fmtTime } from "../../lib/format";
+import { fmtPickup, fmtTime, money } from "../../lib/format";
 import { todayIn } from "../../lib/time";
-import type { BoardOrder, OrderStatus } from "../../lib/types";
+import type { BoardOrder, OrderStatus, PayMethod } from "../../lib/types";
 import { DietMark, Notice } from "../../components/ui";
 import { useAdmin } from "./AdminShell";
 
@@ -13,6 +13,15 @@ const COLUMNS: { status: OrderStatus; title: string; next?: OrderStatus; nextLab
   { status: "ready", title: "Ready", next: "completed", nextLabel: "Picked up", back: "preparing" },
   { status: "completed", title: "Picked up", back: "ready" },
 ];
+
+const PAY_METHODS: { method: PayMethod; label: string }[] = [
+  { method: "cash", label: "Cash" },
+  { method: "check", label: "Check" },
+  { method: "zelle", label: "Zelle" },
+  { method: "square", label: "Card (Square)" },
+];
+const METHOD_LABEL: Record<string, string> = { stripe: "online", cash: "cash", check: "check", zelle: "Zelle", square: "card", external: "other" };
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 function useChime() {
   const ctx = useRef<AudioContext | null>(null);
@@ -39,6 +48,8 @@ function useChime() {
 
 export default function Board({ kitchen = false }: { kitchen?: boolean }) {
   const { member } = useAdmin();
+  const isManager = member.role !== "kitchen_staff";
+  const [paying, setPaying] = useState<string | null>(null);
   const TZ = member.timezone;
   const qc = useQueryClient();
   const chime = useChime();
@@ -89,6 +100,24 @@ export default function Board({ kitchen = false }: { kitchen?: boolean }) {
     if (to === "ready") supabase.functions.invoke("notify-ready", { body: { orderId: o.id } }).catch(() => undefined);
   }
 
+  async function markPaid(o: BoardOrder, method: PayMethod) {
+    setBusyId(o.id); setProblem(null);
+    const { error } = await supabase.rpc("record_manual_payment", { p_order: o.id, p_method: method });
+    setBusyId(null);
+    if (error) { setProblem(`Couldn't record payment for ${o.orderNumber}. Try again.`); return; }
+    setPaying(null);
+    qc.invalidateQueries({ queryKey: ["board", member.tenantId] });
+  }
+
+  async function undoPaid(o: BoardOrder) {
+    if (!window.confirm(`Mark ${o.orderNumber} as not paid?`)) return;
+    setBusyId(o.id); setProblem(null);
+    const { error } = await supabase.rpc("undo_manual_payment", { p_order: o.id });
+    setBusyId(null);
+    if (error) { setProblem(`Couldn't undo the payment for ${o.orderNumber}.`); return; }
+    qc.invalidateQueries({ queryKey: ["board", member.tenantId] });
+  }
+
   const today = todayIn(TZ);
   const orders = board.data ?? [];
   const localDate = (iso: string) => new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(new Date(iso));
@@ -114,7 +143,7 @@ export default function Board({ kitchen = false }: { kitchen?: boolean }) {
             <summary className="cursor-pointer font-semibold">Upcoming pre-orders: {upcoming.length} for later dates</summary>
             <ul className="mt-2 grid gap-1 text-sm sm:grid-cols-2 lg:grid-cols-3">
               {upcoming.map((o) => (
-                <li key={o.id}><b>{o.orderNumber}</b> · {fmtPickup(o.pickupAt, TZ)} · {o.firstName} · {o.items.reduce((n, i) => n + i.quantity, 0)} items</li>
+                <li key={o.id}><b>{o.orderNumber}</b> · {fmtPickup(o.pickupAt, TZ)} · {o.firstName} · {plural(o.items.reduce((n, i) => n + i.quantity, 0), "item")}{o.paymentStatus === "unpaid" ? " · pay at pickup" : ""}</li>
               ))}
             </ul>
           </details>
@@ -131,6 +160,8 @@ export default function Board({ kitchen = false }: { kitchen?: boolean }) {
                   const mins = Math.round((new Date(o.pickupAt).getTime() - Date.now()) / 60000);
                   const urgent = col.status !== "completed" && col.status !== "ready" && mins < 0 ? "border-nonveg" : col.status !== "completed" && col.status !== "ready" && mins < 10 ? "border-gold" : "border-line";
                   const mixed = o.items.some((i) => i.diet !== "veg") && o.items.some((i) => i.diet === "veg");
+                  const unpaid = o.paymentStatus === "unpaid";
+                  const showPay = unpaid && (col.status === "ready" || paying === o.id);
                   return (
                     <article key={o.id} className={`card border-2 ${urgent} ${fresh.has(o.id) ? "ring-4 ring-[color:var(--accent)]" : ""} flex flex-col gap-2 p-3`}>
                       <div className="flex items-start justify-between gap-2">
@@ -143,6 +174,19 @@ export default function Board({ kitchen = false }: { kitchen?: boolean }) {
                           <div className="text-xs text-muted">{localDate(o.pickupAt) === today ? (mins >= 0 ? `in ${mins} min` : `${-mins} min late`) : fmtPickup(o.pickupAt, TZ)}</div>
                         </div>
                       </div>
+                      {unpaid ? (
+                        <div className="flex items-center justify-between gap-2 rounded-md bg-gold px-2 py-1 text-sm font-bold uppercase tracking-wider text-[#2a1a05]">
+                          <span>Pay at pickup</span>
+                          <span className="tabular-nums">{o.amountDueCents != null ? `${money(o.amountDueCents, member.currency)} due` : ""}</span>
+                        </div>
+                      ) : o.paymentStatus === "paid" && (
+                        <div className="flex items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wider text-muted">
+                          <span>Paid{o.paidMethod ? ` · ${METHOD_LABEL[o.paidMethod] ?? o.paidMethod}` : ""}</span>
+                          {isManager && o.paidMethod && !["stripe", "external"].includes(o.paidMethod) && col.status !== "completed" && (
+                            <button className="normal-case tracking-normal underline" disabled={busyId === o.id} onClick={() => undoPaid(o)}>Undo</button>
+                          )}
+                        </div>
+                      )}
                       {mixed && <div className="rounded-md bg-nonveg px-2 py-0.5 text-center text-xs font-bold uppercase tracking-wider text-white">Non-veg on ticket</div>}
                       <ul className={`flex flex-col gap-1 ${big}`}>
                         {o.items.map((it, i) => (
@@ -153,9 +197,24 @@ export default function Board({ kitchen = false }: { kitchen?: boolean }) {
                         ))}
                       </ul>
                       {o.notes && <div className="rounded-lg border-2 border-dashed border-gold px-2 py-1 text-sm"><b>Note:</b> {o.notes}</div>}
+                      {showPay && (
+                        <div className="flex flex-col gap-2 rounded-xl bg-sunk p-2">
+                          <div className="text-sm font-semibold">Mark paid by</div>
+                          <div className="grid grid-cols-2 gap-2">
+                            {PAY_METHODS.map((pm) => (
+                              <button key={pm.method} className="btn min-h-[56px] px-2 text-base" disabled={busyId === o.id}
+                                onClick={() => markPaid(o, pm.method)}>{pm.label}</button>
+                            ))}
+                          </div>
+                          {col.status !== "ready" && <button className="text-sm text-muted underline" onClick={() => setPaying(null)}>Cancel</button>}
+                        </div>
+                      )}
                       <div className="mt-1 flex gap-2">
                         {col.back && <button className="btn min-h-[48px] px-3 text-sm" disabled={busyId === o.id} onClick={() => move(o, col.back!)} aria-label={`Move ${o.orderNumber} back`}>Back</button>}
-                        {col.next && <button className="btn-primary min-h-[56px] flex-1 text-base" disabled={busyId === o.id} onClick={() => move(o, col.next!)}>{col.nextLabel}</button>}
+                        {unpaid && !showPay && <button className="btn min-h-[48px] px-3 text-sm" onClick={() => setPaying(o.id)}>Paid?</button>}
+                        {col.next && !(col.next === "completed" && unpaid) && (
+                          <button className="btn-primary min-h-[56px] flex-1 text-base" disabled={busyId === o.id} onClick={() => move(o, col.next!)}>{col.nextLabel}</button>
+                        )}
                       </div>
                     </article>
                   );

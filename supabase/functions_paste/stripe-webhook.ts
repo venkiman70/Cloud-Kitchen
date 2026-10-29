@@ -29,6 +29,8 @@ export type Receipt = {
   subtotalCents: number;
   taxCents: number;
   totalCents: number;
+  paymentStatus?: string | null;
+  payAtPickup?: boolean | null;
   items: { name: string; variant?: string | null; quantity: number; lineTotalCents: number }[];
 };
 
@@ -44,6 +46,7 @@ export const pickupText = (iso: string, timeZone: string) =>
   }).format(new Date(iso));
 
 function layout(r: Receipt, heading: string, intro: string, statusUrl: string): string {
+  const due = r.paymentStatus === "unpaid";
   const rows = (r.items ?? []).map((i) =>
     `<tr><td style="padding:6px 0">${i.quantity} × ${esc(i.name)}${i.variant ? ` <span style="color:#666">(${esc(i.variant)})</span>` : ""}</td>
      <td style="padding:6px 0;text-align:right">${money(i.lineTotalCents, r.currency)}</td></tr>`
@@ -57,7 +60,7 @@ function layout(r: Receipt, heading: string, intro: string, statusUrl: string): 
   <table style="width:100%;border-collapse:collapse;font-size:14px">${rows}
     <tr><td style="padding:6px 0;border-top:1px solid #ddd">Subtotal</td><td style="padding:6px 0;border-top:1px solid #ddd;text-align:right">${money(r.subtotalCents, r.currency)}</td></tr>
     <tr><td style="padding:2px 0">Sales tax</td><td style="padding:2px 0;text-align:right">${money(r.taxCents, r.currency)}</td></tr>
-    <tr><td style="padding:6px 0"><b>Total paid</b></td><td style="padding:6px 0;text-align:right"><b>${money(r.totalCents, r.currency)}</b></td></tr>
+    <tr><td style="padding:6px 0"><b>${due ? "Total to pay at pickup" : "Total paid"}</b></td><td style="padding:6px 0;text-align:right"><b>${money(r.totalCents, r.currency)}</b></td></tr>
   </table>
   ${r.pickupInstructions ? `<p style="margin:16px 0 0;font-size:14px">${esc(r.pickupInstructions)}</p>` : ""}
   <p style="margin:20px 0"><a href="${esc(statusUrl)}" style="background:#2f6b3a;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none">View order status</a></p>
@@ -85,7 +88,9 @@ export function sendReceipt(r: Receipt, appUrl: string) {
   if (!r.customerEmail) return Promise.resolve(false);
   const first = (r.customerName ?? "").split(" ")[0];
   return send(r.customerEmail, `${r.brandName}: order ${r.orderNumber} confirmed`,
-    layout(r, "Thanks for your order", `${first ? first + ", w" : "W"}e've got your order and will have it ready for pickup.`,
+    layout(r, "Thanks for your order",
+      `${first ? first + ", w" : "W"}e've got your order and will have it ready for pickup.` +
+        (r.paymentStatus === "unpaid" ? " You'll pay when you pick it up." : ""),
       `${appUrl}/order/${r.publicToken}`));
 }
 
@@ -94,7 +99,6 @@ export function sendReady(r: Receipt, appUrl: string) {
   return send(r.customerEmail, `${r.brandName}: order ${r.orderNumber} is ready for pickup`,
     layout(r, "Your order is ready", "Your order is packed and ready for pickup.", `${appUrl}/order/${r.publicToken}`));
 }
-
 // ---- end inlined ----
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") ?? "", { httpClient: Stripe.createFetchHttpClient() });

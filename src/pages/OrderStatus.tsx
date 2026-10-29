@@ -25,7 +25,7 @@ export default function OrderStatus() {
   const { token } = useParams();
   const [params] = useSearchParams();
   const store = useStore();
-  const justPaid = params.get("paid") === "1";
+  const justPaid = params.get("paid") === "1" || params.get("placed") === "1";
 
   const q = useQuery({
     queryKey: ["order", token],
@@ -63,6 +63,9 @@ export default function OrderStatus() {
         {o.status === "cancelled" && <Notice tone="warn">This order was cancelled. If you were charged, the refund is on its way.</Notice>}
         {o.status === "refunded" && <Notice>This order was refunded. It can take 5–10 days to show on your card.</Notice>}
         {o.status === "ready" && <Notice tone="ok">Your order is ready. {o.pickupInstructions}</Notice>}
+        {o.paymentStatus === "unpaid" && !["pending_payment", "cancelled", "refunded"].includes(o.status) && (
+          <div className="mt-3"><Notice tone="warn">Please pay {money(o.totalCents, o.currency)} at the counter when you pick up.</Notice></div>
+        )}
       </div>
 
       {stepIndex >= 0 && (
@@ -84,7 +87,7 @@ export default function OrderStatus() {
           </div>
         ))}
         <div className="flex justify-between p-3 text-muted tabular-nums"><span>Sales tax</span><span>{money(o.taxCents, o.currency)}</span></div>
-        <div className="flex justify-between p-3 font-bold tabular-nums"><span>Total</span><span>{money(o.totalCents, o.currency)}</span></div>
+        <div className="flex justify-between p-3 font-bold tabular-nums"><span>{o.paymentStatus === "unpaid" && o.status !== "pending_payment" ? "Due at pickup" : "Total"}</span><span>{money(o.totalCents, o.currency)}</span></div>
       </section>
 
       {o.address && <p className="mt-6 text-sm"><span className="font-semibold">Pickup at</span> {o.address}</p>}

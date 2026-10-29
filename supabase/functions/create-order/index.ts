@@ -1,14 +1,17 @@
-// create-order: validates and prices the cart in Postgres (create_order), then
-// opens a Stripe Checkout Session for it. The browser never sends a trusted price.
+// create-order: validates and prices the cart in Postgres (create_order), then either
+// opens a Stripe Checkout Session for it, or (pay at pickup) sends it straight to the
+// kitchen as confirmed and unpaid. The browser never sends a trusted price.
 //
-// POST { tenant, brand, pickupAt, notes?, customer: {name, phone, email?, optInEmail?, optInSms?},
+// POST { tenant, brand, pickupAt, notes?, payAtPickup?, customer: {name, phone, email?, optInEmail?, optInSms?},
 //        items: [{variantId, quantity}] }
-// 200  { url, orderNumber, publicToken }
+// 200  { url, orderNumber, publicToken }            (pay now: redirect to url)
+// 200  { payAtPickup: true, orderNumber, publicToken } (pay at pickup: no redirect)
 // 4xx  { error: <customer-friendly message>, code }
 
 import Stripe from "npm:stripe@17.7.0";
 import { createClient } from "npm:@supabase/supabase-js@2.46.1";
 import { appUrl, corsHeaders, json } from "../_shared/http.ts";
+import { sendReceipt, type Receipt } from "../_shared/email.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") ?? "", { httpClient: Stripe.createFetchHttpClient() });
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
@@ -35,6 +38,8 @@ const MESSAGES: Record<string, (detail: string) => string> = {
   PICKUP_DATE_NOT_ALLOWED: (d) => `${d} can only be picked up on the listed pickup dates.`,
   SLOT_FULL: () => "That pickup time is full. Choose another time.",
   LIMIT_REACHED: (d) => `We've reached the limit for ${d} on that day. Lower the quantity or pick another day.`,
+  PAY_AT_PICKUP_OFF: () => "Pay at pickup isn't available right now. Choose Pay now to place your order.",
+  PAY_AT_PICKUP_LIMIT: (d) => `Pay at pickup is for orders up to ${d}. Choose Pay now for this order.`,
 };
 
 function friendly(message: string): { code: string; error: string } {
@@ -80,7 +85,25 @@ Deno.serve(async (req) => {
     return json(req, f, 422);
   }
 
-  // 2. Open a Stripe Checkout Session on the tenant's connected account (if any)
+  // 2a. Pay at pickup: confirm it for the kitchen, email the receipt, no Stripe
+  if (body.payAtPickup === true) {
+    const { data: receipt, error: payError } = await db.rpc("confirm_pay_at_pickup", { p_order: order.orderId });
+    if (payError || !receipt) {
+      await db.from("orders").update({ status: "cancelled" }).eq("id", order.orderId).eq("status", "pending_payment");
+      const f = friendly(payError?.message ?? "");
+      if (f.code === "UNKNOWN") console.error("confirm_pay_at_pickup failed", payError);
+      return json(req, f, 422);
+    }
+    if (order.customerEmail) {
+      const site = appUrl(req);
+      if (await sendReceipt(receipt as Receipt, site)) {
+        await db.from("orders").update({ receipt_sent_at: new Date().toISOString() }).eq("id", order.orderId);
+      }
+    }
+    return json(req, { payAtPickup: true, orderNumber: order.orderNumber, publicToken: order.publicToken });
+  }
+
+  // 2b. Pay now: open a Stripe Checkout Session on the tenant's connected account (if any)
   const site = appUrl(req);
   const currency = order.currency ?? "usd";
   const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = order.lines.map(
@@ -99,6 +122,9 @@ Deno.serve(async (req) => {
     const session = await stripe.checkout.sessions.create(
       {
         mode: "payment",
+        // Pickup orders: cards (Apple Pay and Google Pay ride on "card") and Link only.
+        // Bank debits (ACH) take days to clear, so they're kept for catering.
+        payment_method_types: ["card", "link"],
         line_items: lineItems,
         customer_email: order.customerEmail ?? undefined,
         client_reference_id: order.orderId,

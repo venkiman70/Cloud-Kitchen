@@ -124,6 +124,7 @@ supabase/
 - Aryas dishes are **sample** items until the real menu arrives; AHIL prices are from the flyer; allergens are inferred.
 - Platform fee 4% of food subtotal after discounts, excluding tax, tips and marketplace orders; no monthly minimum.
 - Guest checkout only; customers are matched by mobile number. No card data is stored.
+- Pay at pickup on for Aryas, up to $100 per order. Counter methods are cash, check, Zelle and card on Square; the 4% fee on these is invoiced monthly, not taken by Stripe.
 
 ## Not built yet (next)
 

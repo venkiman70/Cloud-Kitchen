@@ -9,7 +9,7 @@ insert into public.tenant_settings (tenant_id, timezone, currency, tax_rate_bps,
   pickup_hours, address, phone, whatsapp, pickup_instructions, pay_at_pickup, platform_fee_bps)
 values ('0fb0f7f5-15f9-5968-88e5-76377bd2ed13', 'America/Chicago', 'usd', 825, 20, 15, 4, '{"mon": ["11:00", "21:00"], "tue": ["11:00", "21:00"], "wed": ["11:00", "21:00"], "thu": ["11:00", "21:00"], "fri": ["11:00", "21:00"], "sat": ["11:00", "21:00"], "sun": ["11:00", "21:00"]}'::jsonb,
   '2526 Manana Dr, Suite 104, Dallas, TX', '+19459541827', '+19459541827',
-  'Pickup at Suite 104. Call or WhatsApp +1 945 954 1827 when you arrive.', false, 400)
+  'Pickup at Suite 104. Call or WhatsApp +1 945 954 1827 when you arrive.', true, 400)
 on conflict (tenant_id) do nothing;
 update public.tenant_settings set banner_url = '/brand/banner.webp' where tenant_id = (select id from public.tenants where slug = 'aryas');
 insert into public.brands (id, tenant_id, slug, name, tagline, theme, order_prefix, sort) values
