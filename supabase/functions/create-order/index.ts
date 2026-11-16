@@ -33,6 +33,7 @@ const MESSAGES: Record<string, (detail: string) => string> = {
   PICKUP_TOO_SOON: () => "That pickup time is too soon. Choose a later time.",
   PICKUP_TOO_FAR: () => "Choose a pickup date within the next 45 days.",
   CLOSED_THAT_DAY: () => "We're closed that day. Choose another date.",
+  ORDERING_PAUSED: () => "Online ordering is paused right now. Please try again a little later, or call us to order.",
   OUTSIDE_PICKUP_HOURS: () => "That time is outside pickup hours. Choose another time.",
   COLLECTION_CLOSED: (d) => `Orders for ${d} have closed.`,
   PICKUP_DATE_NOT_ALLOWED: (d) => `${d} can only be picked up on the listed pickup dates.`,

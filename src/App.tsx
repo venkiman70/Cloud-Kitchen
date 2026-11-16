@@ -12,6 +12,7 @@ import Board from "./pages/admin/Board";
 import Prep from "./pages/admin/Prep";
 import MenuAdmin from "./pages/admin/MenuAdmin";
 import Sales from "./pages/admin/Sales";
+import HoursPage from "./pages/admin/OnlineOrdering";
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: true } } });
 
@@ -35,6 +36,7 @@ export default function App() {
             <Route path="prep" element={<Prep />} />
             <Route path="menu" element={<RequireManager><MenuAdmin /></RequireManager>} />
             <Route path="sales" element={<Sales />} />
+            <Route path="hours" element={<RequireManager><HoursPage /></RequireManager>} />
           </Route>
           <Route path="/kitchen" element={<RequireStaff><Board kitchen /></RequireStaff>} />
 

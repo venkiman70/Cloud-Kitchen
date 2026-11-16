@@ -39,7 +39,9 @@ export function StoreProvider({ children, fallback }: { children: ReactNode; fal
       if (error) throw error;
       return data as StoreConfig | null;
     },
-    staleTime: 5 * 60_000,
+    staleTime: 60_000,
+    // Re-check every minute so a pause, closure or hours change reaches open pages quickly.
+    refetchInterval: 60_000,
   });
   if (q.isLoading) return <>{fallback("loading")}</>;
   if (q.isError) return <>{fallback("error")}</>;

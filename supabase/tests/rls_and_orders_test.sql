@@ -45,7 +45,8 @@ insert into tenant_members (tenant_id, user_id, role) values
 -- Test-only menu items and settings (rolled back at the end), so the test works on a live database
 update tenant_settings set slot_capacity = 1000, pickup_hours = '{}'::jsonb, lead_time_minutes = 20, pay_at_pickup = true, pay_at_pickup_max_cents = 10000
  where tenant_id = (select id from tenants where slug = 'aryas');
-update menu_collections set pickup_dates = array['2026-11-07']::date[], order_cutoff_at = '2026-11-08 12:00:00-06'
+-- Diwali pickup day = the day after tomorrow, so the test keeps working after the real dates pass
+update menu_collections set pickup_dates = array[((now() at time zone 'America/Chicago')::date + 2)], order_cutoff_at = now() + interval '3 days'
  where slug = 'diwali-2026';
 insert into menu_items (id, tenant_id, brand_id, name, diet, protein)
 select x.id::uuid, t.id, b.id, x.name, x.diet::diet_type, x.protein
@@ -97,10 +98,10 @@ select pg_temp.assert((select count(*) = 1 from customers where phone = '+121455
 select pg_temp.expect_error(format($q$select create_order('{"tenant":"aryas","brand":"aryas","pickupAt":"%s","customer":{"name":"X","phone":"123"},"items":[{"variantId":"%s","quantity":1}]}')$q$, (select pickup from _ctx), (select dosa from _ctx)), 'BAD_PHONE%');
 select pg_temp.expect_error(format($q$select create_order('{"tenant":"aryas","brand":"aryas","pickupAt":"%s","customer":{"name":"X","phone":"2145550111"},"items":[{"variantId":"%s","quantity":1}]}')$q$, now() + interval '5 minutes', (select dosa from _ctx)), 'PICKUP_TOO_SOON%');
 select pg_temp.expect_error(format($q$select create_order('{"tenant":"aryas","brand":"aryas","pickupAt":"%s","customer":{"name":"X","phone":"2145550111"},"items":[{"variantId":"44444444-4444-4444-4444-444444444444","quantity":1}]}')$q$, (select pickup from _ctx)), 'ITEM_NOT_FOUND%');
--- Diwali item must be picked up on 6-8 Nov
+-- Diwali item must be picked up on its listed pickup date
 select pg_temp.expect_error(format($q$select create_order('{"tenant":"aryas","brand":"ahil","pickupAt":"%s","customer":{"name":"X","phone":"2145550111"},"items":[{"variantId":"%s","quantity":1}]}')$q$, (select pickup from _ctx), (select ladoo from _ctx)), 'PICKUP_DATE_NOT_ALLOWED%');
 select pg_temp.assert((select (create_order(jsonb_build_object('tenant','aryas','brand','ahil',
-  'pickupAt', '2026-11-07 12:00:00-06', 'customer', jsonb_build_object('name','Priya','phone','2145550101'),
+  'pickupAt', (((now() at time zone 'America/Chicago')::date + 2) + time '12:00') at time zone 'America/Chicago', 'customer', jsonb_build_object('name','Priya','phone','2145550101'),
   'items', jsonb_build_array(jsonb_build_object('variantId',(select ladoo from _ctx),'quantity',8))))->>'orderNumber') like 'AH-%'), 'AHIL Diwali pre-order accepted, numbered AH-');
 
 reset role;
@@ -148,7 +149,7 @@ select pg_temp.expect_error(format('select advance_order(%L, %L)', (select order
 select pg_temp.expect_error(format('select advance_order(%L, %L)', (select order_a->>'orderId' from _ctx), 'cancelled'), 'BAD_TRANSITION%');
 select set_item_availability('55555555-0000-0000-0000-000000000001', false);
 with u as (update item_variants set price_cents = 1 returning 1) select pg_temp.assert(count(*) = 0, 'kitchen staff cannot change prices') from u;
-select pg_temp.assert((select jsonb_typeof(prep_totals((select id from tenants where slug = 'aryas'), '2026-11-07')) = 'array'), 'kitchen can read prep totals');
+select pg_temp.assert((select jsonb_typeof(prep_totals((select id from tenants where slug = 'aryas'), ((now() at time zone 'America/Chicago')::date + 2))) = 'array'), 'kitchen can read prep totals');
 reset role;
 select pg_temp.assert((select not is_available from menu_items where id = '55555555-0000-0000-0000-000000000001'), 'kitchen sold out Test Dosa');
 

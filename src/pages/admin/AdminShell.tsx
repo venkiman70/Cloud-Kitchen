@@ -123,6 +123,7 @@ function AdminNav() {
           <NavLink to="/admin/prep" className={link}>Prep list</NavLink>
           {isManager && <NavLink to="/admin/menu" className={link}>Menu</NavLink>}
           {isManager && <NavLink to="/admin/sales" className={link}>Sales</NavLink>}
+          {isManager && <NavLink to="/admin/hours" className={link}>Hours</NavLink>}
           <NavLink to="/kitchen" className={link}>Kitchen screen</NavLink>
         </nav>
         <span className="flex-1" />
