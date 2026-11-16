@@ -8,6 +8,7 @@ import { dateLabel } from "../lib/time";
 import type { MenuItem } from "../lib/types";
 import { DietMark, FullPage, Spinner, SPICE } from "../components/ui";
 import { BrandMark } from "../components/BrandMark";
+import { StoreStatus } from "../components/StoreStatus";
 
 const MENU_SELECT =
   "id,name,description,diet,protein,spice,allergens,is_vegan,is_jain,image_url,is_available,is_catering_only,is_sample,sort,collection_id," +
@@ -81,6 +82,7 @@ export default function Menu() {
       </header>
 
       <main className="wrap pt-4">
+        <div className="mb-4 empty:hidden"><StoreStatus /></div>
         {collections.map((c) => (
           <div key={c.id} className="mb-4 rounded-2xl border-2 border-dashed px-4 py-3" style={{ borderColor: "rgb(var(--marigold) / .7)", background: "rgb(var(--marigold) / .12)" }}>
             <div className="h-display text-2xl" style={{ color: "var(--accent)" }}>{c.name}</div>

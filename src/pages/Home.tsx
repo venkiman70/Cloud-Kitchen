@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useBrand, useStore } from "../lib/store";
 import { BrandMark } from "../components/BrandMark";
 import { dateLabel } from "../lib/time";
+import { StoreStatus } from "../components/StoreStatus";
 
 /** Landing page: the shop's banner, then one card per brand using its own artwork. */
 export default function Home() {
@@ -25,6 +26,8 @@ export default function Home() {
           <h1 className="h-display mt-2 text-4xl text-fg sm:text-5xl">{store.tenant.name}</h1>
           <p className="script mt-1 text-xl" style={{ color: "rgb(var(--leaf))" }}>Good food · Happy moments</p>
         </div>
+
+        <div className="mx-auto mt-4 max-w-2xl"><StoreStatus /></div>
 
         <div className="mt-6 grid gap-5 sm:mt-2 sm:grid-cols-2">
           {store.brands.map((b) => {

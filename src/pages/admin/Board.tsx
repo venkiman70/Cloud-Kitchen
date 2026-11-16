@@ -6,6 +6,7 @@ import { todayIn } from "../../lib/time";
 import type { BoardOrder, OrderStatus, PayMethod } from "../../lib/types";
 import { DietMark, Notice } from "../../components/ui";
 import { useAdmin } from "./AdminShell";
+import { PauseControl } from "./OnlineOrdering";
 
 const COLUMNS: { status: OrderStatus; title: string; next?: OrderStatus; nextLabel?: string; back?: OrderStatus }[] = [
   { status: "confirmed", title: "New", next: "preparing", nextLabel: "Start preparing" },
@@ -135,6 +136,7 @@ export default function Board({ kitchen = false }: { kitchen?: boolean }) {
           {!chime.on && <button className="btn-primary" onClick={chime.enable}>Turn on new-order sound</button>}
           {kitchen && <a href="/admin" className="btn">Exit kitchen screen</a>}
         </div>
+        <div className="mb-3 flex"><PauseControl dark={kitchen} /></div>
         {problem && <div className="mb-3"><Notice tone="error">{problem}</Notice></div>}
         {board.isError && <div className="mb-3"><Notice tone="error">Can't load orders. Check the internet connection.</Notice></div>}
 

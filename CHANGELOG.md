@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.0 — Sun 15 Nov 2026 (Hours + Pause online ordering)
+
+- **Admin → Hours** (owners and managers): weekly pickup hours (open/closed and times for each day, "Copy Monday to Tue–Fri"), closed dates with an optional note for customers, one Save button. No more SQL to change hours.
+- **Pause online orders** (any staff member, on the Orders board, the kitchen screen and the Hours page): optional message for customers and automatic turn-back-on (30 min, 1 hour, 2 hours, tomorrow, or manual). A big red banner shows while paused, with who paused it and a "Turn online ordering back on" button.
+- **Customers:** home, menu and checkout show "Online ordering is paused right now" (with the message, expected return time and phone number) or "We're closed today"; closed dates disappear from the pickup date picker; checkout is disabled while paused. Open pages re-check every minute.
+- **Rules in the database:** web orders are refused while paused (`ORDERING_PAUSED`) or on a closed date (`CLOSED_THAT_DAY`). Hours are validated (closing after opening, real times). Hours, closures and pause can only be changed through `update_store_hours` (owners/managers) and `set_online_ordering` (all staff); every change is written to `audit_log`.
+- **Database:** migration `20261115000007_hours_and_pause.sql` (paste-in copy: `supabase/hours_and_pause_2026-11-15.sql`). New tests: `supabase/tests/hours_and_pause_test.sql`. `create-order` has a friendly message for `ORDERING_PAUSED` (redeploy the function; until then customers see the generic error, but checkout is already disabled in the app).
+- Tests: the Diwali checks in `rls_and_orders_test.sql` now use dates relative to today, so the suite keeps passing after the real Diwali dates.
+- Not yet: more than one opening window per day (e.g. lunch and dinner), per-brand hours.
+
 ## 0.4.0 — Wed 28 Oct 2026 (Pay at pickup + Mark paid)
 
 - **Checkout:** when the kitchen allows it, customers choose **Pay now** (card, Apple Pay, Google Pay, Link) or **Pay at pickup**. Pay at pickup sends the order straight to the kitchen as confirmed and unpaid, emails a receipt that says "Total to pay at pickup", and is refused over the cap (`tenant_settings.pay_at_pickup_max_cents`, default $100). Aryas: on.

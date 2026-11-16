@@ -6,6 +6,7 @@ import { formatPhone, money, taxPreview } from "../lib/format";
 import { dateLabel, slotsFor, todayIn } from "../lib/time";
 import { DietMark, FullPage, Notice } from "../components/ui";
 import { BrandMark } from "../components/BrandMark";
+import { StoreStatus } from "../components/StoreStatus";
 
 export default function Checkout() {
   const { brandSlug } = useParams();
@@ -36,7 +37,7 @@ export default function Checkout() {
   }, [cartCollections, s.timezone]);
 
   const [date, setDate] = useState<string>("");
-  const slotOpts = { timeZone: s.timezone, hours: s.pickupHours, slotMinutes: s.slotMinutes, leadMinutes: s.leadTimeMinutes };
+  const slotOpts = { timeZone: s.timezone, hours: s.pickupHours, slotMinutes: s.slotMinutes, leadMinutes: s.leadTimeMinutes, closures: s.closures };
   const dateWithSlots = dates.filter((d) => slotsFor(d, slotOpts).length > 0);
   const activeDate = date && dateWithSlots.includes(date) ? date : dateWithSlots[0] ?? "";
   const slots = activeDate ? slotsFor(activeDate, slotOpts) : [];
@@ -127,6 +128,8 @@ export default function Checkout() {
         ))}
       </section>
 
+      {s.orderingPaused && <div className="mt-6"><StoreStatus /></div>}
+
       <form onSubmit={submit} className="mt-6 flex flex-col gap-6" noValidate>
         <fieldset className="flex flex-col gap-3">
           <legend className="mb-2 text-xs font-bold uppercase tracking-widest text-muted">Pickup</legend>
@@ -208,7 +211,7 @@ export default function Checkout() {
 
         {error && <Notice tone="error">{error}</Notice>}
 
-        <button type="submit" className="btn-primary min-h-[52px] text-lg" disabled={busy || !slot}>
+        <button type="submit" className="btn-primary min-h-[52px] text-lg" disabled={busy || !slot || Boolean(s.orderingPaused)}>
           {atPickup
             ? (busy ? "Placing your order…" : `Place order · pay ${money(total, s.currency)} at pickup`)
             : (busy ? "Opening secure payment…" : `Pay ${money(total, s.currency)}`)}

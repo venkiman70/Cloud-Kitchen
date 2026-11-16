@@ -24,6 +24,8 @@ export type Collection = {
   isPreorder: boolean;
 };
 
+export type Closure = { date: string; note: string | null };
+
 export type StoreSettings = {
   timezone: string;
   currency: string;
@@ -38,6 +40,10 @@ export type StoreSettings = {
   payAtPickup: boolean;
   payAtPickupMaxCents?: number | null;
   bannerUrl?: string | null;
+  closures?: Closure[];
+  orderingPaused?: boolean;
+  pausedReason?: string | null;
+  pausedUntil?: string | null;
 };
 
 export type StoreConfig = {

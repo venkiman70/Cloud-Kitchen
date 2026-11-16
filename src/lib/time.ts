@@ -48,8 +48,9 @@ const DEFAULT_HOURS: [string, string] = ["11:00", "21:00"];
 /** Available pickup slots for one date, respecting hours and lead time. */
 export function slotsFor(
   dateStr: string,
-  opts: { timeZone: string; hours: Record<string, [string, string] | null>; slotMinutes: number; leadMinutes: number },
+  opts: { timeZone: string; hours: Record<string, [string, string] | null>; slotMinutes: number; leadMinutes: number; closures?: { date: string }[] },
 ): { iso: string; label: string }[] {
+  if (opts.closures?.some((c) => c.date === dateStr)) return [];
   const key = dayKey(dateStr);
   // Same rule as create_order(): a day missing from pickup_hours is open (default hours); null = closed.
   const hours = opts.hours ?? {};
